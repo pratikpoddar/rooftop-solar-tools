@@ -2,10 +2,28 @@
  * Phase 0 lead sink for the rooftop solar tools (spec §6, §8).
  *
  * Deploy:
- *   1. Create a Google Sheet. Extensions → Apps Script, paste this file.
+ *   1. Create a Google Sheet. Extensions → Apps Script, paste this file. Save.
  *   2. Deploy → New deployment → type "Web app".
- *      Execute as: Me.  Who has access: Anyone.
- *   3. Copy the /exec URL into SHEETS_WEBHOOK_URL in your hosting env.
+ *        Execute as:      Me
+ *        Who has access:  Anyone        <-- see the warning below
+ *   3. Authorize when prompted. Google will show "hasn't verified this app";
+ *      Advanced → Go to ... (this is your own script).
+ *   4. Copy the Web app URL ending in /exec into SHEETS_WEBHOOK_URL.
+ *
+ * WATCH OUT — "Who has access" is the one that breaks this.
+ *   Anything other than "Anyone" makes the endpoint return a 403 HTML page
+ *   ("Access denied. You need access") to every request, because your server
+ *   posts anonymously and can never authenticate. "Anyone with a Google
+ *   account" fails the same way. It must be literally "Anyone".
+ *
+ *   To change it without minting a new URL: Deploy → Manage deployments →
+ *   pencil/edit on the active deployment → set access → Deploy. Creating a
+ *   *New* deployment instead issues a different /exec URL, and you must then
+ *   update SHEETS_WEBHOOK_URL or leads will 502.
+ *
+ * Because "Anyone" means unauthenticated, anyone holding the URL can append
+ * rows. The URL is unguessable, which is obscurity rather than security — add
+ * a shared token check here and in /api/lead before this carries real volume.
  *
  * The header row is created on first write. Column order is fixed, so new
  * fields must be appended to FIELDS rather than inserted, or historical rows
