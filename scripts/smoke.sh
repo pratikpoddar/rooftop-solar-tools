@@ -1,0 +1,136 @@
+#!/usr/bin/env bash
+#
+# Post-deploy smoke check.
+#
+# Exists because the most damaging failure this app has hit was invisible both
+# locally and in the test suite: Netlify's CDN keyed the /api/og cache on the
+# path only, so every share card served one stranger's numbers. Nothing errored.
+# A unit test cannot reach a CDN, so the cache key has to be asserted against a
+# real deployment.
+#
+# Usage:  scripts/smoke.sh [base-url]
+#         scripts/smoke.sh https://rooftopsolarindia.netlify.app
+
+set -uo pipefail
+
+BASE="${1:-${NEXT_PUBLIC_SITE_URL:-https://rooftopsolarindia.netlify.app}}"
+BASE="${BASE%/}"
+FAILED=0
+TMP="$(mktemp -d)"
+trap 'rm -rf "$TMP"' EXIT
+
+pass() { printf '  \033[32mok\033[0m   %s\n' "$1"; }
+fail() { printf '  \033[31mFAIL\033[0m %s\n' "$1"; FAILED=$((FAILED + 1)); }
+
+echo "Smoke-testing $BASE"
+
+# --- pages -----------------------------------------------------------------
+echo
+echo "Pages"
+for path in / /tools /tools/subsidy-calculator /tools/bill-to-size \
+  /tools/savings-payback /tools/loan-emi /solar-subsidy /solar-subsidy/gujarat \
+  /solar-panel-price /solar-panel-price/pune /sources /robots.txt /sitemap.xml; do
+  code="$(curl -sS -o /dev/null -w '%{http_code}' --max-time 30 "$BASE$path" || echo 000)"
+  if [ "$code" = "200" ]; then pass "$path"; else fail "$path returned $code"; fi
+done
+
+# --- the app, not the scaffold ---------------------------------------------
+echo
+echo "Serving the app"
+curl -sS -o "$TMP/home.html" --max-time 30 "$BASE/" || true
+if grep -q 'Create Next App' "$TMP/home.html"; then
+  fail "serving the create-next-app scaffold — is the host building the right branch?"
+elif grep -q 'rooftop solar' "$TMP/home.html"; then
+  pass "home page is the real app"
+else
+  fail "home page content unrecognised"
+fi
+
+# --- OG cards: distinct inputs MUST yield distinct images -------------------
+echo
+echo "Share cards"
+curl -sS -o "$TMP/a.png" --max-time 40 "$BASE/api/og?kind=savings&value=1838000&place=Pune&kw=3" || true
+curl -sS -o "$TMP/b.png" --max-time 40 "$BASE/api/og?kind=subsidy&value=88000&place=Gujarat&kw=3" || true
+curl -sS -o "$TMP/c.png" --max-time 40 "$BASE/api/og?kind=savings&value=1838000&place=Pune&kw=3&size=sq" || true
+
+dims() {
+  python3 -c "
+import struct, sys
+d = open(sys.argv[1], 'rb').read()
+if d[:8] != b'\x89PNG\r\n\x1a\n':
+    print('notpng'); raise SystemExit
+w, h = struct.unpack('>II', d[16:24])
+print(f'{w}x{h}')
+" "$1" 2>/dev/null || echo "unreadable"
+}
+
+[ "$(dims "$TMP/a.png")" = "1200x630" ] \
+  && pass "1200x630 card renders" \
+  || fail "1200x630 card is $(dims "$TMP/a.png")"
+
+[ "$(dims "$TMP/c.png")" = "1080x1080" ] \
+  && pass "1080x1080 card renders" \
+  || fail "1080x1080 card is $(dims "$TMP/c.png") — the size param is being dropped or cached away"
+
+sum() { python3 -c "import hashlib,sys; print(hashlib.md5(open(sys.argv[1],'rb').read()).hexdigest())" "$1"; }
+
+if [ "$(sum "$TMP/a.png")" = "$(sum "$TMP/b.png")" ]; then
+  fail "two different cards are byte-identical — the CDN is ignoring the query string in its cache key"
+else
+  pass "distinct inputs produce distinct cards"
+fi
+
+# --- short links ------------------------------------------------------------
+echo
+echo "Short links"
+token="$(python3 -c "
+import base64, json
+print(base64.urlsafe_b64encode(json.dumps({'t':'savings','s':'maharashtra','c':'pune','k':3}).encode()).decode().rstrip('='))
+")"
+target="$(curl -sS -o /dev/null -w '%{redirect_url}' --max-time 30 "$BASE/r/$token" || true)"
+case "$target" in
+  *"/tools/savings-payback?"*"city=pune"*) pass "/r/{token} reopens the tool prefilled" ;;
+  *) fail "/r/{token} redirected to '${target:-nothing}'" ;;
+esac
+
+# --- lead API: the consent gate is a product rule, not a nicety ------------
+echo
+echo "Lead capture"
+code="$(curl -sS -o /dev/null -w '%{http_code}' --max-time 30 -X POST \
+  -H 'Content-Type: application/json' \
+  -d '{"name":"Smoke Test","phone":"9876543210","tool":"smoke","sourcePage":"/","consentGiven":false}' \
+  "$BASE/api/lead" || echo 000)"
+[ "$code" = "422" ] && pass "rejects a lead with no consent (422)" \
+  || fail "no-consent lead returned $code, expected 422"
+
+code="$(curl -sS -o /dev/null -w '%{http_code}' --max-time 30 -X POST \
+  -H 'Content-Type: application/json' \
+  -d '{"name":"Smoke Test","phone":"12345","tool":"smoke","sourcePage":"/","consentGiven":true,"consentText":"smoke"}' \
+  "$BASE/api/lead" || echo 000)"
+[ "$code" = "400" ] && pass "rejects a malformed phone number (400)" \
+  || fail "bad-phone lead returned $code, expected 400"
+
+# --- indexing gate ----------------------------------------------------------
+echo
+echo "Indexing"
+robots="$(curl -sS --max-time 30 "$BASE/robots.txt" || true)"
+meta="$(grep -oE '<meta name="robots" content="[^"]*"' "$TMP/home.html" | head -1)"
+if printf '%s' "$robots" | grep -qE '^Disallow: /$'; then
+  case "$meta" in
+    *noindex*) pass "noindexed and disallowed — consistent (flip NEXT_PUBLIC_ALLOW_INDEXING to launch)" ;;
+    *) fail "robots.txt disallows everything but the page meta says '$meta'" ;;
+  esac
+else
+  case "$meta" in
+    *noindex*) fail "robots.txt allows crawling but the page meta says noindex — inconsistent" ;;
+    *) pass "open to crawlers, robots.txt and page meta agree" ;;
+  esac
+fi
+
+echo
+if [ "$FAILED" -eq 0 ]; then
+  echo "All checks passed."
+else
+  echo "$FAILED check(s) failed."
+fi
+exit "$FAILED"
