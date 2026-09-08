@@ -35,7 +35,7 @@ const FAQS = [
     a: `About Rs ${formatIndianNumber(systemCost(3).gross)} installed, within a typical range of Rs ${formatIndianNumber(systemCost(3).grossMin)} to Rs ${formatIndianNumber(systemCost(3).grossMax)} depending on your city, panel brand and roof. After the Rs ${formatIndianNumber(subsidyBreakdown({ kw: 3, stateSlug: "maharashtra" }).total)} central subsidy you pay roughly Rs ${formatIndianNumber(systemCost(3).gross - 78000)}.`,
   },
   {
-    q: "Is rooftop solar actually worth it?",
+    q: "Is rooftop solar worth it?",
     a: "In most of India a correctly sized system pays for itself in three to six years and then runs for another twenty. It is worth much less in states that run net billing rather than net metering, such as Uttar Pradesh and Tamil Nadu, because exported units are bought at a wholesale rate rather than credited against your tariff. Our savings calculator applies your state's actual rule.",
   },
   {
