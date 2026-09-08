@@ -1,7 +1,37 @@
 import type { NextConfig } from "next";
 
+/**
+ * Resolve the canonical site URL once, at build time.
+ *
+ * The value is injected as NEXT_PUBLIC_SITE_URL so the server and the browser
+ * bundle read the same string — see the note in src/lib/site.ts for why this
+ * cannot live in that module. An explicit env var always wins; the host's own
+ * address is the safety net so a deploy is never self-inconsistent when someone
+ * forgets to set it.
+ */
+function resolveSiteUrl(): string {
+  const explicit = process.env.NEXT_PUBLIC_SITE_URL;
+  if (explicit) return explicit.replace(/\/$/, "");
+
+  // Netlify: URL is the site's main address; DEPLOY_PRIME_URL is this branch's.
+  if (process.env.NETLIFY) {
+    const netlify = process.env.CONTEXT === "production" ? process.env.URL : process.env.DEPLOY_PRIME_URL ?? process.env.URL;
+    if (netlify) return netlify.replace(/\/$/, "");
+  }
+
+  if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`;
+
+  return "https://rooftopsolarindia.netlify.app";
+}
+
+const SITE_URL = resolveSiteUrl();
+
 const nextConfig: NextConfig = {
   poweredByHeader: false,
+
+  env: {
+    NEXT_PUBLIC_SITE_URL: SITE_URL,
+  },
 
   /**
    * The spec names some SEO surfaces at the root (§3) and others under /tools

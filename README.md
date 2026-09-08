@@ -33,9 +33,16 @@ npm run dev
 
 | Variable | Required | Notes |
 |---|---|---|
-| `NEXT_PUBLIC_SITE_URL` | for correct share links | Canonical URLs, OG image URLs, `wa.me` links |
+| `NEXT_PUBLIC_SITE_URL` | no | Canonical URLs, sitemap URLs, OG image URLs, `wa.me` links. Unset, the build reads the host's own address (Netlify `URL`/`DEPLOY_PRIME_URL`, Vercel `VERCEL_URL`) and falls back to the Netlify site — resolved in `next.config.ts` so server and browser agree |
+| `NEXT_PUBLIC_ALLOW_INDEXING` | to launch | `"true"` opens the site to crawlers. Off by default: `robots.txt` disallows everything, pages carry `noindex`, the sitemap is empty |
 | `NEXT_PUBLIC_GA_ID` | no | Analytics is skipped entirely when unset |
 | `SHEETS_WEBHOOK_URL` | in production | Apps Script web app; see `scripts/leads-apps-script.gs`. `/api/lead` returns 503 rather than dropping a lead silently |
+
+### Deployment
+
+Hosted on Netlify at [rooftopsolarindia.netlify.app](https://rooftopsolarindia.netlify.app). Netlify's free plan permits commercial projects; Vercel's Hobby plan does not, and this product monetises through installer and bank referrals from day one.
+
+**The site is deliberately noindexed until the domain is settled.** `NEXT_PUBLIC_ALLOW_INDEXING` is the single switch. The reasoning is in `src/lib/site.ts`: the ranking moat is a programmatic inventory compounding authority on one hostname, and being indexed under a temporary `*.netlify.app` address turns launch into a migration.
 
 ## Architecture
 

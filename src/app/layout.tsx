@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import Script from "next/script";
 import "./globals.css";
-import { SITE } from "@/lib/site";
+import { INDEXING_ALLOWED, SITE } from "@/lib/site";
 import { jsonLd, organizationSchema, webSiteSchema } from "@/lib/schema";
 import { SiteFooter, SiteHeader } from "@/components/layout";
 
@@ -24,7 +24,14 @@ export const metadata: Metadata = {
     url: SITE.url,
   },
   twitter: { card: "summary_large_image" },
-  robots: { index: true, follow: true },
+  /*
+   * robots.txt alone is a request, not a guarantee — a page linked from
+   * elsewhere can still be indexed. The meta tag is the one crawlers honour,
+   * so the gate is applied in both places.
+   */
+  robots: INDEXING_ALLOWED
+    ? { index: true, follow: true }
+    : { index: false, follow: false, nocache: true },
 };
 
 export const viewport: Viewport = {

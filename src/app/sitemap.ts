@@ -1,12 +1,15 @@
 import type { MetadataRoute } from "next";
 import { PHASE0_CITY_PAGES, STATES, citiesByPriority } from "@/data/solar-engine";
-import { absoluteUrl } from "@/lib/site";
+import { INDEXING_ALLOWED, absoluteUrl } from "@/lib/site";
 
 /**
  * Phase 0 sitemap: English only. Phase 1 emits one sitemap per language with an
  * hreflang cluster across all eight (spec §5).
  */
 export default function sitemap(): MetadataRoute.Sitemap {
+  // Nothing to submit while the deployment is noindexed.
+  if (!INDEXING_ALLOWED) return [];
+
   const now = new Date();
 
   const statics: MetadataRoute.Sitemap = [
