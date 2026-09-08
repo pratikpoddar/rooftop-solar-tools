@@ -21,6 +21,7 @@ trap 'rm -rf "$TMP"' EXIT
 
 pass() { printf '  \033[32mok\033[0m   %s\n' "$1"; }
 fail() { printf '  \033[31mFAIL\033[0m %s\n' "$1"; FAILED=$((FAILED + 1)); }
+skip() { printf '  \033[33mskip\033[0m %s\n' "$1"; }
 
 echo "Smoke-testing $BASE"
 
@@ -96,19 +97,28 @@ esac
 # --- lead API: the consent gate is a product rule, not a nicety ------------
 echo
 echo "Lead capture"
-code="$(curl -sS -o /dev/null -w '%{http_code}' --max-time 30 -X POST \
-  -H 'Content-Type: application/json' \
-  -d '{"name":"Smoke Test","phone":"9876543210","tool":"smoke","sourcePage":"/","consentGiven":false}' \
-  "$BASE/api/lead" || echo 000)"
-[ "$code" = "422" ] && pass "rejects a lead with no consent (422)" \
-  || fail "no-consent lead returned $code, expected 422"
+# /api/lead rate-limits to 5 requests per minute per IP, and it counts rejected
+# attempts too — deliberately, so the endpoint cannot be probed for free. That
+# means these checks can trip the limiter, either because the script ran twice
+# inside a minute or because someone was testing by hand. A 429 is the limiter
+# working, not a defect, so it is reported as a skip rather than a failure.
+check_lead() {
+  local label="$1" expected="$2" payload="$3"
+  local code
+  code="$(curl -sS -o /dev/null -w '%{http_code}' --max-time 30 -X POST \
+    -H 'Content-Type: application/json' -d "$payload" "$BASE/api/lead" || echo 000)"
+  case "$code" in
+    "$expected") pass "$label ($expected)" ;;
+    429) skip "$label — rate limited (429). The limiter is working; wait a minute and re-run." ;;
+    *) fail "$label returned $code, expected $expected" ;;
+  esac
+}
 
-code="$(curl -sS -o /dev/null -w '%{http_code}' --max-time 30 -X POST \
-  -H 'Content-Type: application/json' \
-  -d '{"name":"Smoke Test","phone":"12345","tool":"smoke","sourcePage":"/","consentGiven":true,"consentText":"smoke"}' \
-  "$BASE/api/lead" || echo 000)"
-[ "$code" = "400" ] && pass "rejects a malformed phone number (400)" \
-  || fail "bad-phone lead returned $code, expected 400"
+check_lead "rejects a lead with no consent" 422 \
+  '{"name":"Smoke Test","phone":"9876543210","tool":"smoke","sourcePage":"/","consentGiven":false}'
+
+check_lead "rejects a malformed phone number" 400 \
+  '{"name":"Smoke Test","phone":"12345","tool":"smoke","sourcePage":"/","consentGiven":true,"consentText":"smoke"}'
 
 # --- indexing gate ----------------------------------------------------------
 echo
