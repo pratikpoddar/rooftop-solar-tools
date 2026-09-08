@@ -1,103 +1,120 @@
-import Image from "next/image";
+import type { Metadata } from "next";
+import Link from "next/link";
+import {
+  RESIDENTIAL_CFA_CAP,
+  citiesByPriority,
+  formatIndianNumber,
+  rupees,
+  statesByPriority,
+  systemCost,
+  subsidyBreakdown,
+} from "@/data/solar-engine";
+import { SubsidyCalculator } from "@/components/tools/SubsidyCalculator";
+import { Card, Container, LinkList, Prose, SectionHeading, Stat, StatGrid } from "@/components/ui";
+import { faqSchema, jsonLd } from "@/lib/schema";
+import { SITE } from "@/lib/site";
 
-export default function Home() {
+export const metadata: Metadata = {
+  title: `${SITE.name} — ${SITE.tagline}`,
+  description: SITE.description,
+  alternates: { canonical: "/" },
+  openGraph: {
+    title: `${SITE.name} — ${SITE.tagline}`,
+    description: SITE.description,
+    images: [{ url: "/api/og?kind=savings&value=218000&place=India&kw=3", width: 1200, height: 630 }],
+  },
+};
+
+const FAQS = [
+  {
+    q: "How much subsidy do I get for rooftop solar in India?",
+    a: `Under PM Surya Ghar you get Rs 30,000 per kW for the first 2 kW and Rs 18,000 for the third kW, capped at Rs ${formatIndianNumber(RESIDENTIAL_CFA_CAP)} for any residential system above 3 kW. Several states add a top-up on top of that — Gujarat adds Rs 10,000, Uttar Pradesh up to Rs 30,000.`,
+  },
+  {
+    q: "What does a 3 kW rooftop solar system cost in India?",
+    a: `About Rs ${formatIndianNumber(systemCost(3).gross)} installed, within a typical range of Rs ${formatIndianNumber(systemCost(3).grossMin)} to Rs ${formatIndianNumber(systemCost(3).grossMax)} depending on your city, panel brand and roof. After the Rs ${formatIndianNumber(subsidyBreakdown({ kw: 3, stateSlug: "maharashtra" }).total)} central subsidy you pay roughly Rs ${formatIndianNumber(systemCost(3).gross - 78000)}.`,
+  },
+  {
+    q: "Is rooftop solar actually worth it?",
+    a: "In most of India a correctly sized system pays for itself in three to six years and then runs for another twenty. It is worth much less in states that run net billing rather than net metering, such as Uttar Pradesh and Tamil Nadu, because exported units are bought at a wholesale rate rather than credited against your tariff. Our savings calculator applies your state's actual rule.",
+  },
+  {
+    q: "Can I get a loan for rooftop solar?",
+    a: "Yes. PM Surya Ghar makes rooftop loans collateral-free up to Rs 2 lakh at around 7 to 7.4 percent, with tenures up to ten years. For a typical 3 kW system the EMI is usually smaller than the electricity bill it replaces.",
+  },
+];
+
+export default function HomePage() {
+  const topStates = statesByPriority().slice(0, 10);
+  const topCities = citiesByPriority(12);
+
   return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+    <Container className="py-8 sm:py-12">
+      <section className="mb-10">
+        <h1 className="text-3xl font-bold leading-tight tracking-tight sm:text-4xl">
+          What rooftop solar <span className="text-[var(--accent)]">actually</span> costs you
+        </h1>
+        <Prose>
+          <p className="mt-3 max-w-2xl text-base">
+            Every installer&apos;s website is a sales page. This is the arithmetic: what the government pays you, what
+            you pay, what you save, and how long it takes — for your state, your city and your electricity board. Free,
+            no signup, nothing sold.
+          </p>
+        </Prose>
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
+        <StatGrid cols={3}>
+          <div className="mt-6 contents">
+            <Stat label="Central subsidy, up to" value={rupees(RESIDENTIAL_CFA_CAP)} sub="PM Surya Ghar" />
+            <Stat label="Cities with local figures" value="100" sub="generation and tariffs" />
+            <Stat label="States and UTs covered" value="36" sub="subsidy and net metering" />
+          </div>
+        </StatGrid>
+      </section>
+
+      <SubsidyCalculator sourcePage="/" />
+
+      <div className="mt-12 space-y-8">
+        <LinkList
+          title="Subsidy by state"
+          links={topStates.map((s) => ({ href: `/solar-subsidy/${s.slug}`, label: s.name }))}
+        />
+        <LinkList
+          title="Price by city"
+          links={topCities.map((c) => ({ href: `/solar-panel-price/${c.slug}`, label: c.name }))}
+        />
+
+        <Card tone="soft" className="p-4 sm:p-5">
+          <SectionHeading>The other three calculators</SectionHeading>
+          <ul className="mt-3 space-y-3 text-sm">
+            {[
+              { href: "/tools/bill-to-size", title: "What size solar do I need?", body: "Your bill tells you the size. It also tells you the roof area you need." },
+              { href: "/tools/savings-payback", title: "Is solar worth it? 25-year savings", body: "Year-one saving, payback, and what your state's net-metering rule does to the maths." },
+              { href: "/tools/loan-emi", title: "Solar loan EMI", body: "Collateral-free up to Rs 2 lakh. Compare five banks against the bill you already pay." },
+            ].map((item) => (
+              <li key={item.href}>
+                <Link href={item.href} className="group block">
+                  <span className="font-semibold text-[var(--accent)] group-hover:underline">{item.title} →</span>
+                  <span className="block text-[var(--fg-muted)]">{item.body}</span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </Card>
+
+        <section>
+          <SectionHeading>Common questions</SectionHeading>
+          <dl className="mt-3 divide-y divide-[var(--line)]">
+            {FAQS.map((f) => (
+              <div key={f.q} className="py-4">
+                <dt className="font-semibold">{f.q}</dt>
+                <dd className="mt-1.5 text-sm leading-relaxed text-[var(--fg-muted)]">{f.a}</dd>
+              </div>
+            ))}
+          </dl>
+        </section>
+      </div>
+
+      <script type="application/ld+json" dangerouslySetInnerHTML={jsonLd(faqSchema(FAQS))} />
+    </Container>
   );
 }
