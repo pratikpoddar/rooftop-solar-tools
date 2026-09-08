@@ -1,0 +1,334 @@
+# Rooftop Solar India Tools - Product Spec (Builder-Ready)
+
+Version 1.0 - September 2026
+Owner: Pratik Poddar
+Status: Ready for build
+
+---
+
+## 1. Product Concept
+
+**One-line pitch:** Free calculators and navigators that tell every Indian homeowner exactly what rooftop solar will cost them, what the government will pay them, and what they will save - in their language, for their city and DISCOM.
+
+**Why now:** PM Surya Ghar Muft Bijli Yojana (launched Feb 2024, target 1 crore households, Rs 75,021 crore outlay) created a national research wave. Every potential buyer googles the same questions - "solar subsidy", "3kW solar price", "is solar worth it in [city]" - and lands on installer blogs doing sales. Nobody owns the neutral, numbers-first position. That position is winnable because the wave is new and the subsidy math is genuinely confusing (central + state top-up + net metering rules differ by state).
+
+**Distribution:** SEO on programmatic pages + WhatsApp-native sharing of personalized result cards + society/RWA group loops. No ad spend.
+
+**Monetization:** Consented lead routing to empanelled installers and solar-loan banks, per closed deal, not per lead.
+
+**Name/domain suggestions (check availability):**
+- suryakhata.com / .in (khata = account/ledger, works across languages)
+- merasolar.in
+- gharlesolar.com (ghar = home)
+- bijlicalc.com
+- soorka.com (short, brandable, from "sooraj")
+Pick something Hindi-romanized and short; it must read fine in Devanagari too. Avoid English-only names - half the product is non-English.
+
+---
+
+## 2. The Numbers Engine (single source of truth)
+
+Every tool, page, and share card reads from one versioned data module (`/data/solar-engine`). Never hardcode numbers inside tool components. Ship the engine as JSON + typed functions so programmatic SEO pages and calculators share identical math.
+
+### 2.1 Central subsidy (PM Surya Ghar CFA, residential)
+Source: https://pmsuryaghar.gov.in and CFA structure PDF (pmsg-production-public.s3.ap-south-1.amazonaws.com/CFA_structure20240307.pdf)
+
+| System size | Central subsidy (CFA) |
+|---|---|
+| First 2 kW | Rs 30,000 per kW |
+| 3rd kW | Rs 18,000 |
+| Above 3 kW | capped at Rs 78,000 total |
+| Group Housing Society / RWA common facilities | Rs 18,000 per kW up to 500 kW (at Rs 18,000/kW) |
+
+```
+function centralSubsidy(kW):
+  if kW <= 2: return kW * 30000
+  if kW <= 3: return 60000 + (kW - 2) * 18000
+  return 78000   # capped for all residential > 3 kW
+```
+
+### 2.2 State top-ups (verify quarterly; schemes pause when budgets exhaust)
+Source: https://quickestimate.co/blog/state-top-up-subsidies-pm-surya-ghar + state nodal agency portals
+
+| State | Agency | Top-up | Conditions |
+|---|---|---|---|
+| Gujarat | GEDA (Surya Gujarat) | Rs 10,000 flat (1-10 kW) | No income limit; arrives 2-4 weeks after central DBT |
+| Uttar Pradesh | UPNEDA | Rs 30,000 (Rs 15,000/kW up to 2 kW) | Separate UPNEDA application |
+| Rajasthan | RRECL | Rs 10,000 (1-2 kW) / Rs 15,000 (3 kW); up to Rs 30,000 for BPL on 1 kW | First-come annual budget; BPL card for enhanced |
+| Haryana | HAREDA | varies, income ceiling Rs 3-5L | Separate application within 45 days of commissioning |
+| Delhi | BSES/TPDDL | generation incentive per unit (Rs ~2-3/kWh on generation, 24 months) instead of capital top-up | via DISCOM portal |
+| MP | MPUVN | income-ceiling-linked | check MPUVN portal |
+
+Schema per state: `{ topUpType: capital|generation|none, amount, conditions[], applicationPortal, separateApplication: bool, lastVerified: date, status: active|paused|exhausted }`. Every page rendering a state top-up must show "last verified on <date>".
+
+### 2.3 System cost
+Source: https://gosolarindex.in/blog/solar-panel-cost-india-2025 (cross-checked with 4 vendor sites)
+
+Default installed-cost curve (on-grid, standard roof, tier-1 panels, incl. GST at 12%):
+
+| Size | Cost range | Default used in calcs |
+|---|---|---|
+| 1 kW | Rs 50,000-65,000 | Rs 58,000 |
+| 2 kW | Rs 1,00,000-1,30,000 | Rs 1,15,000 |
+| 3 kW | Rs 1,50,000-1,95,000 | Rs 1,72,000 |
+| 5 kW | Rs 2,50,000-3,25,000 | Rs 2,85,000 |
+| 10 kW | Rs 5,00,000-6,50,000 | Rs 5,70,000 |
+
+Per-watt: Rs 50-65/W residential. State adjustment factors: Gujarat -5%, Delhi +8%, others from table on source page. Add-ons modeled separately: structural reinforcement (+Rs 10-50k flag), net-meter charges (Rs 3-8k), battery (not in default flow).
+
+### 2.4 Generation by state (kWh per kWp per year)
+Source: MNRE Solar Atlas / NREL India via https://www.heavengreenenergy.com/blog/solar-generation-by-state
+
+National residential average: 1,500 kWh/kWp/yr (~4.1 units/day, CUF ~17%).
+
+| State/region | kWh/kWp/yr | | State/region | kWh/kWp/yr |
+|---|---|---|---|---|
+| Rajasthan (west) | 1,700-1,800 | | Karnataka (interior) | 1,500-1,600 |
+| Rajasthan (Jaipur belt) | ~1,650 | | Karnataka (coast) | 1,350-1,450 |
+| Gujarat (Kutch/Saurashtra) | 1,600-1,650 | | Tamil Nadu (inland) | 1,500-1,600 |
+| Gujarat (coast/south) | 1,500-1,550 | | Tamil Nadu (Chennai/coast) | 1,400-1,500 |
+| Punjab / Haryana | 1,500-1,600 | | Andhra Pradesh | 1,500-1,600 |
+| UP (west) | 1,500-1,550 | | Telangana | 1,500-1,600 |
+| UP (east) | 1,400-1,450 | | Bihar / Jharkhand / Odisha | 1,300-1,450 |
+| MP | 1,500-1,600 | | West Bengal | 1,200-1,350 |
+| Maharashtra (interior) | 1,550-1,600 | | Kerala | 1,200-1,400 |
+| Maharashtra (Konkan/Mumbai) | 1,400-1,500 | | Goa | 1,300-1,450 |
+| Chhattisgarh | 1,450-1,550 | | North-East | ~1,100-1,150 |
+
+City table: map top 100 cities to the state/region band (Mumbai = 1,425, Bengaluru = 1,550, Hyderabad = 1,550, Chennai = 1,450, Delhi = 1,500, Jaipur = 1,700, Pune = 1,575, Kochi = 1,300, Kolkata = 1,250, etc.). Monthly profile multipliers (share of annual): apply monsoon dips (Mumbai July ~37% of March output; Jaipur July ~58% of March). Store as 12 monthly factors per region.
+
+### 2.5 Tariffs (domestic slabs)
+Per-state domestic slab rates from each SERC tariff order. This is the least standardized dataset - budget real effort here in Phase 0. Start with an average effective domestic rate per state (e.g. Mumbai ~Rs 8, DGVCL Gujarat ~Rs 5.5, KSEB Kerala slab-5 Rs 8.10), then upgrade to full slab math per DISCOM. Store per DISCOM: `{ slabs: [{from, to, rate}], fixedCharge, lastVerified }`.
+
+### 2.6 Loans
+PM Surya Ghar model: collateral-free up to Rs 2 lakh at ~7-7.4% (SBI 7.15%, Canara 7.30%, Union 7.35%), tenure up to 10-15 years. Sources: sbi.bank.in/web/sbi-green/green-loans/personal/pm-surya-ghar-loan-for-solar-roof-top, myrsolar.com/pm-surya-ghar-bank-loan-list. Standard EMI formula: `EMI = P * r * (1+r)^n / ((1+r)^n - 1)`.
+
+### 2.7 Net metering rules by state
+Source: https://de.energy/net-metering-state-wise-rules/ + each SERC regulation. Store per state: mechanism (net metering / net billing / gross), cap, settlement period (monthly/annual), excess-unit settlement rate (APPC), banking charges, electricity-duty exemption. Key gotchas the navigator must surface: Gujarat Rs 1.5/kWh banking charge on 15-min banking; UP and Tamil Nadu are net-BILLING (exports settled at APPC, not 1:1) - this changes savings math materially; Maharashtra DISCOMs effectively capping at 999 kW despite 5 MW regulation; annual-lapse states (Bihar, Odisha) where oversized systems lose excess units at FY end.
+
+---
+
+## 3. Tool Suite (14 tools)
+
+Each tool below lists: inputs, outputs, logic, share card, SEO surface. All tools read from the Numbers Engine. Every tool ends in the same two CTAs: "Get free quotes from verified installers" (lead capture) and "Share your result" (viral loop).
+
+### T1. Subsidy Calculator (hero tool)
+- **Inputs:** state, system size kW (slider or bill-based suggestion), consumer type (individual / housing society), BPL flag, income-band flag (for states with ceilings).
+- **Outputs:** central subsidy, state top-up, total subsidy, net system cost, "effective cost per kW", eligibility notes, next steps (apply on pmsuryaghar.gov.in, then state portal if separate).
+- **Logic:** `centralSubsidy(kW)` + state top-up table + GHS rule (Rs 18,000/kW up to 500 kW).
+- **Share card:** "My solar subsidy: Rs 88,000 (Gujarat). Check yours."
+- **SEO surface:** /solar-subsidy/, /solar-subsidy/{state}/ x ~30 states x 8 languages.
+
+### T2. Bill to System-Size Estimator
+- **Inputs:** monthly bill amount (Rs) OR monthly units (kWh), state, DISCOM (optional).
+- **Outputs:** recommended kW (size to offset ~80-90% of consumption, capped at sanctioned load), roof area needed, system cost, subsidy, net cost.
+- **Logic:** units = bill / effective tariff; kW = (units * 12) / (state kWh/kWp); round to standard sizes 1/2/3/5/10.
+- **SEO surface:** /what-size-solar/{city}/, "kitne kW ka solar" Hindi keyword cluster.
+
+### T3. Savings & Payback Estimator (25-year)
+- **Inputs:** state/city, monthly bill, system size (prefilled from T2), self-consumption share (default 70%), financing (cash / loan).
+- **Outputs:** year-1 monthly and annual saving, simple payback years, 25-year cumulative savings chart, comparison "EMI vs bill saving" (for the 3 kW case, EMI ~Rs 1,200 vs saving ~Rs 2,000-2,400 - the "solar pays for itself from month 1" hook).
+- **Logic:** generation = kW * city kWh/kWp * monthly factors; self-consumed units valued at slab tariff; exported units at APPC for net-billing states (UP, TN) or carried per state settlement rule; escalate tariff 5%/yr, degrade generation 0.7%/yr, O&M Rs 3,000/yr escalating 5%, inverter replacement Rs 25k in year 13. Payback = netCost / year1Savings.
+- **Share card:** "My roof saves Rs 2,18,000 in 25 years. Check yours." (this is THE viral card)
+- **SEO surface:** /solar-savings-calculator/, /is-solar-worth-it/{city}/.
+
+### T4. Roof Area to kW Estimator
+- **Inputs:** usable shadow-free roof area (sq ft or sq m), or "I don't know" flow (plot size / Google Maps measure-later link).
+- **Outputs:** max kW, resulting generation and savings (chain into T3).
+- **Logic:** 100 sq ft (~10 sqm) per kW; apply 60-75% utilization factor for obstructions (water tank, parapet, mumty) - source: solar.delhi.gov.in/solar/calculator.
+- **SEO surface:** /roof-size-for-solar/, "100 sq ft solar kitna kW" cluster.
+
+### T5. Solar Loan / EMI Calculator
+- **Inputs:** net cost after subsidy (prefilled), loan amount (default min(netCost, 2,00,000)), bank (rate table), tenure.
+- **Outputs:** EMI, total interest, EMI vs monthly saving chart, break-even month, bank comparison table (SBI 7.15%, Canara 7.30%, Union 7.35%, BoB, Indian Bank).
+- **Share card:** "Solar EMI Rs 1,050 vs my old bill Rs 2,300."
+- **SEO surface:** /solar-loan-emi-calculator/, /pm-surya-ghar-loan/.
+
+### T6. Generation Estimator by City
+- **Inputs:** city (top-100 dropdown + PIN), system size.
+- **Outputs:** units/day, units/month chart (12 bars with monsoon dip), units/year, CO2 offset.
+- **Logic:** city kWh/kWp * monthly factors.
+- **SEO surface:** /solar-generation/{city}/ x 100 cities x 8 languages.
+
+### T7. DISCOM / Net-Metering Navigator
+- **Inputs:** state, DISCOM.
+- **Outputs:** step-by-step checklist (apply on national portal, feasibility, install, inspection, net meter install, subsidy DBT), documents needed, fees, expected timeline, state-specific gotchas (banking charges, net-billing vs net-metering, annual lapse), direct links to DISCOM portal pages.
+- **Logic:** rule table per state (section 2.7). This is content + structured data, not computation.
+- **SEO surface:** /net-metering/{state}/, /net-metering/{discom}/. High-intent long-tail, very winnable.
+
+### T8. Tariff Explorer
+- **Inputs:** state, DISCOM, monthly units.
+- **Outputs:** current slab table, effective per-unit rate at user's consumption, "your solar offset value" (which slabs solar erases first).
+- **Logic:** slab table from engine.
+- **SEO surface:** /electricity-tariff/{state}/.
+
+### T9. Society / RWA Bulk-Buy Calculator
+- **Inputs:** number of flats/units, common-load kW (lifts, pumps, lights), state, optional per-flat interest count.
+- **Outputs:** GHS subsidy (Rs 18,000/kW up to 500 kW) for common areas, group-purchase discount estimate (5-10% for 10+ simultaneous installs), per-household cost and saving, one-page PDF/WhatsApp summary the committee can forward.
+- **Why it matters:** this is the society-group viral loop - one committee member runs it and drops the card in the society WhatsApp group, 500 roofs research at once.
+- **Share card:** "Our society can save Rs 41 lakh in 25 years. 3 kW per flat, Rs 78,000 subsidy each."
+- **SEO surface:** /solar-for-housing-society/, /rwa-solar-{state}/.
+
+### T10. Vendor Shortlister + Quote Request (monetization engine)
+- **Inputs:** PIN/city, system size, name, phone (OTP-verified), consent checkbox (explicit, unchecked by default: "Share my details with up to 3 empanelled installers who will call me").
+- **Outputs:** 3-5 MNRE/DISCOM-empanelled vendors (from national portal vendor list + vendor rating module), quote-request confirmation, expected price band for their city so they can judge quotes.
+- **Logic:** vendor directory table (city -> vendors, rating, empanelment id). Lead routing rules in section 6.
+- **SEO surface:** /solar-installers/{city}/.
+
+### T11. Bill-Upload Instant Estimate
+- **Inputs:** photo/PDF of electricity bill.
+- **Outputs:** parsed consumer number (masked), units, amount, tariff state; auto-runs T2 + T3 with real numbers.
+- **Logic:** OCR (Google Document AI or Gemini Flash), per-DISCOM bill layout parsers for top 15 DISCOMs, generic fallback. Show parsed fields for user confirmation before computing.
+- **Note:** this is the wow tool - 10 seconds from bill photo to savings number + share card. Also the best lead-qualification signal (real bill = real buyer).
+
+### T12. "Is My System Underperforming?" Checker (post-install)
+- **Inputs:** city, system size, install month, last-month generation (from inverter app or bill).
+- **Outputs:** expected vs actual, verdict (healthy / dusty / shading / fault), cleaning and troubleshooting checklist.
+- **Why:** captures the installed base (crores of systems going in now), brings repeat traffic, and feeds the vendor-rating loop.
+- **SEO surface:** /solar-not-generating/, "solar kam units" Hindi cluster.
+
+### T13. Impact Card Generator
+- **Inputs:** any completed tool session.
+- **Outputs:** environmental stats - CO2 avoided, equivalent trees planted (1 kW ~ 1.5 t CO2/yr ~ 25 trees/yr).
+- **Share card:** the green flex card. Secondary to the money card but spreads in different circles.
+
+### T14. Eligibility Quiz ("Can I get the subsidy?")
+- **Inputs:** 5 yes/no questions (own roof, residential connection, no prior CFA claim, Indian citizen, valid bank account for DBT).
+- **Outputs:** eligible / not / edge-case explanation, next step.
+- **SEO surface:** /pm-surya-ghar-eligibility/. Huge informational query volume.
+
+---
+
+## 4. Viral & Share Mechanics
+
+Rule (from Book Cricket learnings): the share is a personalized result card, never a link to a replay. The recipient sees THEIR friend's number and taps to get their own.
+
+1. **Result cards:** every tool output has a "Share" button generating a 1200x630 (OG) + 1080x1080 (WhatsApp) image: headline number, city, small product branding, CTA line. Server-rendered via Satori/@vercel-og with query params (e.g. /api/og?saving=218000&city=Pune). Card text localized into all 8 languages.
+2. **WhatsApp-first:** share button opens wa.me with prefilled text: "[card image auto-attached by OG] My roof saves Rs 18,200/year after Rs 78,000 subsidy. Check yours: <short link>". Short links per session (/r/{id}) that re-open the tool prefilled to the same city, so the recipient's flow starts at step 2.
+3. **Society loop:** T9's committee card is designed to be forwarded into society WhatsApp groups; include "X of your neighbors have checked" counter on the card (per-PIN aggregate).
+4. **Challenge mechanic:** "Can your roof beat mine?" - compare-your-bill mini-game: recipient enters bill, card shows who saves more. Trivial to build on T2, high forward rate in family groups.
+5. **Festival/wave moments:** pre-build share pushes for subsidy announcements, tariff hikes ("your bill just went up - here's what solar saves"), and summer bill season (April-June).
+
+Anti-spam discipline: one share per session prompt, no auto-anything, no dark patterns. The card must be worth forwarding on its own.
+
+---
+
+## 5. SEO Architecture
+
+### URL structure (language as subpath)
+```
+/{lang}/solar-subsidy/{state}/
+/{lang}/solar-panel-price/{city}/
+/{lang}/is-solar-worth-it/{city}/
+/{lang}/solar-generation/{city}/
+/{lang}/net-metering/{state}/
+/{lang}/solar-installers/{city}/
+/{lang}/tools/{tool-slug}/
+/{lang}/guides/{slug}/
+```
+en is at root without prefix; hi, mr, gu, ta, te, kn, ml as subpaths. hreflang cluster across all 8 + x-default. Same content template per page type, fully translated (not just chrome - the numbers tables and headings too).
+
+### Programmatic page inventory (Phase 1 target ~2,000 indexed pages)
+- 30 states x 8 langs = 240 subsidy pages
+- 100 cities x 8 langs = 800 price pages, 800 worth-it pages, 800 generation pages (build price+worth-it first)
+- 30 net-metering state pages x 8 = 240
+- 50 installer city pages x 8 = 400
+Prioritize states by rooftop-solar search volume: Gujarat, Maharashtra, UP, Rajasthan, Karnataka, TN, Telangana, Delhi, Kerala, MP.
+
+### Page template (example: /solar-subsidy/gujarat/)
+H1: "Solar Subsidy in Gujarat 2026: Rs 88,000 Total (Central + GEDA)" / sections: subsidy table, eligibility, worked 3 kW example with local tariff, how to apply (national portal + GEDA step), FAQ (People-Also-Ask scraped), embedded T1 calculator prefilled to Gujarat, last-verified date, CTA. Every programmatic page embeds the relevant calculator - that is the ranking moat: pure-content competitors cannot copy an interactive tool.
+
+### Schema markup
+FAQPage on every programmatic page, HowTo on navigator pages, SoftwareApplication (or WebApplication) on tool pages, BreadcrumbList everywhere, Organization + WebSite (sitelinks searchbox) globally.
+
+### Technical
+Next.js SSG/ISR, sub-1.5s LCP on 4G, Core Web Vitals green (this niche is mobile-first, low bandwidth). sitemap.xml per language. Search Console + Bing Webmaster. Internal linking: every city page links to its state page, the 3 nearest cities, and the 3 relevant tools. Blog/guides layer for informational queries ("net metering kya hai", "on-grid vs off-grid") written once in English, translated to 7.
+
+---
+
+## 6. Lead Capture & Monetization Plumbing
+
+1. **Capture points:** end of every tool ("get 3 free quotes"), T10 explicitly, T11 after bill parse. Fields: name, phone (OTP), city/PIN, system size, monthly bill, language preference, timestamp, source page/tool.
+2. **Consent:** explicit unticked checkbox naming the disclosure ("up to 3 empanelled installers will call you"). Store consent text + timestamp with the lead. Never route without it. Never sell identifiable data - only consented introductions (this is a hard product rule from the owner).
+3. **Routing:** round-robin within the city's partner installers, max 3 per lead, dedupe by phone within 90 days. Webhook into a CRM (Google Sheet or Notion to start; Zoho/HubSpot later).
+4. **Pricing model:** per-closed-deal referral fee (Rs 5,000-15,000 per installed 3-5 kW residential job is the market band) or 1-2% of system value. Per-lead only as fallback. Bank-loan referrals as second stream (banks pay per disbursal).
+5. **Feedback loop:** ask the lead 30 days later "did you install? with whom?" via WhatsApp - this creates vendor ratings (trust moat) and verifies deal closure for invoicing.
+
+---
+
+## 7. i18n Architecture (8 languages)
+
+Languages: English (en), Hindi (hi), Marathi (mr), Gujarati (gu), Tamil (ta), Telugu (te), Kannada (kn), Malayalam (ml).
+
+- Framework: next-intl (or next-i18next) with ICU message format; all UI strings in per-language JSON files.
+- Translation workflow: English source -> machine translate (Google Cloud Translation / Gemini) -> native-speaker review pass for the top 200 strings and all tool chrome. Numbers, units, and currency stay Indic-formatted (lakh/crore, not 100k) in every language.
+- Fonts: Noto Sans + Noto Sans Devanagari/Tamil/Telugu/Kannada/Malayalam/Gujarati subsets, self-hosted, preloaded.
+- Localized keyword research per language before writing hreflang pages - "solar subsidy" in Hindi ("solar subsidy yojana") and Marathi search patterns differ; do not blindly translate English titles.
+- OG cards and share text localized too.
+- RTL: none needed. Numerals: use Arabic numerals everywhere (standard practice even in Hindi content).
+
+---
+
+## 8. Tech Stack
+
+- **Frontend/site:** Next.js 15 (App Router, SSG + ISR), TypeScript, Tailwind. Static-first for Core Web Vitals and cheap hosting.
+- **Numbers engine:** versioned TypeScript package in the same repo; data as JSON tables with lastVerified fields; a tiny admin script to diff and revalidate pages on data change.
+- **Hosting:** Cloudflare Pages or Vercel (free tier covers Phase 0-1). CDN-cached OG images.
+- **OG images:** Satori + resvg via API route.
+- **Leads DB:** Supabase (Postgres) or plain Google Sheets via webhook for Phase 0; OTP via MSG91/Twilio.
+- **OCR (T11, Phase 2):** Gemini Flash or Google Document AI; per-DISCOM parsers as prompt templates.
+- **Analytics:** GA4 + Search Console + a tiny event schema: tool_started, tool_completed, card_shared, lead_submitted, per tool/lang/city.
+- **Share:** wa.me deep links; WhatsApp Business API only in Phase 3 for the society loop and 30-day follow-ups.
+
+---
+
+## 9. Build Phases
+
+**Phase 0 - MVP (2-3 weeks, fastest launch):**
+Numbers engine (subsidy + 5 state top-ups + 20-city generation + 10-state tariffs) + T1 Subsidy Calculator, T2 Bill-to-Size, T3 Savings/Payback, T5 EMI, result cards with WhatsApp share, English only, 30 state subsidy pages + 40 city price pages (EN). Lead capture to Google Sheet. Ship and start indexing.
+
+**Phase 1 (weeks 4-7):**
+T4 roof, T6 generation, T7 navigator, T14 quiz. Full programmatic inventory in English. Translate everything to hi, mr, gu, ta, te, kn, ml. hreflang live.
+
+**Phase 2 (weeks 8-12):**
+T10 vendor directory + routing + CRM. T11 bill upload OCR. Bank-loan referral integration. Vendor rating collection.
+
+**Phase 3 (quarter 2):**
+T9 society calculator + WhatsApp Business loops, T12 performance checker, challenge mechanic, RWA outreach kit (printable committee one-pager).
+
+**Build first for fastest launch:** T1 + T3 + result cards + 30 subsidy state pages. That is the whole wedge: it answers the number-one query, produces the viral card, and captures the first leads.
+
+---
+
+## 10. Data Sources (with URLs)
+
+- PM Surya Ghar national portal: https://pmsuryaghar.gov.in (subsidy structure, vendor lists, vendor rating module)
+- CFA structure PDF: https://pmsg-production-public.s3.ap-south-1.amazonaws.com/CFA_structure20240307.pdf
+- Scheme guidelines (MNRE): https://cdnbbsr.s3waas.gov.in/s3716e1b8c6cd17b771da77391355749f3/uploads/2025/07/202507081690964295.pdf
+- State top-up map: https://quickestimate.co/blog/state-top-up-subsidies-pm-surya-ghar
+- Gujarat (GEDA / Surya Gujarat): https://suryagujarat.guvnl.in
+- UP (UPNEDA): https://upneda.org.in and https://bridgewaypower.in/blog/solar-subsidy-up-2026-guide
+- Delhi: https://solar.delhi.gov.in (calculator + area norms + generation incentive)
+- Cost benchmarks: https://gosolarindex.in/blog/solar-panel-cost-india-2025
+- Generation by state: https://www.heavengreenenergy.com/blog/solar-generation-by-state (traces to MNRE Solar Atlas / NREL India / ISRO Bhuvan)
+- Net-metering state rules: https://de.energy/net-metering-state-wise-rules/ + each SERC regulation
+- Loans: https://sbi.bank.in/web/sbi-green/green-loans/personal/pm-surya-ghar-loan-for-solar-roof-top, https://myrsolar.com/pm-surya-ghar-bank-loan-list
+- Tariffs: each SERC tariff order (MERC, GERC, UPERC, DERC, TNERC, KERC, TSERC, KSERC...)
+
+**Refresh plan:** quarterly verification pass over state top-ups and tariffs (schemes pause when budgets exhaust - this is normal); automated check that pmsuryaghar.gov.in subsidy text still matches the engine; "last verified" stamp rendered on every page showing subsidy numbers.
+
+---
+
+## 11. Analytics & Success Metrics
+
+- North star: completed tool sessions per week (a "completed" session produced a result card).
+- Funnel: page view -> tool started -> completed -> card shared -> lead submitted. Targets: 60% completion, 8% share rate, 3% lead rate.
+- SEO: indexed pages, top-10 keywords per state/city cluster, impressions by language (watch Hindi vs English split - expect Hindi to pass English within 6 months).
+- Revenue: closed deals verified at 30 days; referral revenue per 1,000 sessions.
+
+## 12. Risks & Compliance
+
+- **Subsidy data staleness is the #1 trust risk.** Quoting an exhausted state scheme burns credibility. The last-verified stamp + quarterly pass is non-negotiable.
+- **Consent-only lead routing.** No identifiable data sales, ever. It is both the ethical line and the growth strategy - the tools spread only while users trust them.
+- **Don't advise, estimate.** Every result carries: "Estimates based on published rates; your installer quote and DISCOM approval are final."
+- **Privacy on T11:** uploaded bills are processed for extraction and not stored beyond the session unless the user saves them.

@@ -1,0 +1,45 @@
+import type { State } from "../types";
+
+/**
+ * All Indian states + UTs. `priority` is rooftop-solar search-demand rank and
+ * drives which pages/datasets get verified first (spec §5: Gujarat, Maharashtra,
+ * UP, Rajasthan, Karnataka, TN, Telangana, Delhi, Kerala, MP).
+ */
+export const STATES: State[] = [
+  { slug: "gujarat", name: "Gujarat", code: "GJ", type: "state", priority: 1 },
+  { slug: "maharashtra", name: "Maharashtra", code: "MH", type: "state", priority: 2 },
+  { slug: "uttar-pradesh", name: "Uttar Pradesh", code: "UP", type: "state", priority: 3 },
+  { slug: "rajasthan", name: "Rajasthan", code: "RJ", type: "state", priority: 4 },
+  { slug: "karnataka", name: "Karnataka", code: "KA", type: "state", priority: 5 },
+  { slug: "tamil-nadu", name: "Tamil Nadu", code: "TN", type: "state", priority: 6 },
+  { slug: "telangana", name: "Telangana", code: "TG", type: "state", priority: 7 },
+  { slug: "delhi", name: "Delhi", code: "DL", type: "ut", priority: 8 },
+  { slug: "kerala", name: "Kerala", code: "KL", type: "state", priority: 9 },
+  { slug: "madhya-pradesh", name: "Madhya Pradesh", code: "MP", type: "state", priority: 10 },
+  { slug: "haryana", name: "Haryana", code: "HR", type: "state", priority: 11 },
+  { slug: "punjab", name: "Punjab", code: "PB", type: "state", priority: 12 },
+  { slug: "andhra-pradesh", name: "Andhra Pradesh", code: "AP", type: "state", priority: 13 },
+  { slug: "west-bengal", name: "West Bengal", code: "WB", type: "state", priority: 14 },
+  { slug: "bihar", name: "Bihar", code: "BR", type: "state", priority: 15 },
+  { slug: "chhattisgarh", name: "Chhattisgarh", code: "CT", type: "state", priority: 16 },
+  { slug: "odisha", name: "Odisha", code: "OR", type: "state", priority: 17 },
+  { slug: "jharkhand", name: "Jharkhand", code: "JH", type: "state", priority: 18 },
+  { slug: "uttarakhand", name: "Uttarakhand", code: "UT", type: "state", priority: 19 },
+  { slug: "assam", name: "Assam", code: "AS", type: "state", priority: 20 },
+  { slug: "himachal-pradesh", name: "Himachal Pradesh", code: "HP", type: "state", priority: 21 },
+  { slug: "goa", name: "Goa", code: "GA", type: "state", priority: 22 },
+  { slug: "jammu-and-kashmir", name: "Jammu & Kashmir", code: "JK", type: "ut", priority: 23 },
+  { slug: "chandigarh", name: "Chandigarh", code: "CH", type: "ut", priority: 24 },
+  { slug: "puducherry", name: "Puducherry", code: "PY", type: "ut", priority: 25 },
+  { slug: "tripura", name: "Tripura", code: "TR", type: "state", priority: 26 },
+  { slug: "meghalaya", name: "Meghalaya", code: "ML", type: "state", priority: 27 },
+  { slug: "manipur", name: "Manipur", code: "MN", type: "state", priority: 28 },
+  { slug: "nagaland", name: "Nagaland", code: "NL", type: "state", priority: 29 },
+  { slug: "arunachal-pradesh", name: "Arunachal Pradesh", code: "AR", type: "state", priority: 30 },
+  { slug: "mizoram", name: "Mizoram", code: "MZ", type: "state", priority: 31 },
+  { slug: "sikkim", name: "Sikkim", code: "SK", type: "state", priority: 32 },
+  { slug: "ladakh", name: "Ladakh", code: "LA", type: "ut", priority: 33 },
+  { slug: "andaman-and-nicobar-islands", name: "Andaman & Nicobar Islands", code: "AN", type: "ut", priority: 34 },
+  { slug: "dadra-and-nagar-haveli-and-daman-and-diu", name: "Dadra & Nagar Haveli and Daman & Diu", code: "DH", type: "ut", priority: 35 },
+  { slug: "lakshadweep", name: "Lakshadweep", code: "LD", type: "ut", priority: 36 },
+];
