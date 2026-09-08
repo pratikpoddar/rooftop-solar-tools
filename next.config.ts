@@ -50,13 +50,10 @@ const nextConfig: NextConfig = {
     ];
   },
 
+  // Cache headers for the result cards live on the route itself, so the
+  // cache-key directive stays next to the reason it is needed.
   async headers() {
     return [
-      {
-        // Result cards are pure functions of their query string.
-        source: "/api/og",
-        headers: [{ key: "Cache-Control", value: "public, max-age=31536000, immutable" }],
-      },
       {
         source: "/(.*)",
         headers: [

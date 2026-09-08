@@ -134,6 +134,20 @@ export async function GET(req: NextRequest) {
       height,
       headers: {
         "Cache-Control": "public, immutable, no-transform, max-age=31536000",
+        /*
+         * A card is a pure function of its query string, so it is safe to cache
+         * forever — but only if the cache key includes the query string.
+         *
+         * Netlify's Next.js adapter defaults to an allowlist,
+         * `netlify-vary: query=__nextDataReq|_rsc`, which keys on those two
+         * params and ignores everything else. With `immutable` on top of that,
+         * the first card ever rendered gets frozen and served for every set of
+         * numbers — silently turning the share loop into one stranger's result.
+         *
+         * `netlify-vary: query` (no allowlist) keys on the whole query string.
+         * Other hosts ignore the header, and Vercel already keys on the full URL.
+         */
+        "netlify-vary": "query",
       },
     },
   );
