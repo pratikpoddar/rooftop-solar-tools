@@ -38,6 +38,21 @@ npm run dev
 | `NEXT_PUBLIC_GA_ID` | no | Analytics is skipped entirely when unset |
 | `SHEETS_WEBHOOK_URL` | in production | Apps Script web app; see `scripts/leads-apps-script.gs`. `/api/lead` returns 503 rather than dropping a lead silently |
 
+#### Wiring up lead capture
+
+1. Deploy `scripts/leads-apps-script.gs` as a Google Apps Script **Web app** — `Execute as: Me`, **`Who has access: Anyone`**.
+2. Put the resulting `/exec` URL in `SHEETS_WEBHOOK_URL` on the host, then **trigger a redeploy** — Netlify bakes env vars in at build time.
+3. Confirm with a real POST; `{"ok":true,"persisted":true}` plus a new sheet row means it is live.
+
+The two failure modes, both of which look identical from the browser:
+
+| Symptom | Cause |
+|---|---|
+| `503 Lead capture is not configured.` | `SHEETS_WEBHOOK_URL` not visible to the function — unset, or set without a redeploy |
+| `502 Could not record that.` | The webhook itself rejected the call. Check the function log: a 403 means the Apps Script deployment is not set to `Anyone` |
+
+`/api/lead` inspects the Apps Script response *body*, not just its status, because Apps Script answers `200` with `{ok:false}` when its own `doPost` fails. Trusting the status alone would show the user "Done" while the lead was dropped.
+
 ### Deployment
 
 Hosted on Netlify at [rooftopsolarindia.netlify.app](https://rooftopsolarindia.netlify.app). Netlify's free plan permits commercial projects; Vercel's Hobby plan does not, and this product monetises through installer and bank referrals from day one.
