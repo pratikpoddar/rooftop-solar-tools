@@ -90,12 +90,10 @@ export default async function CityPricePage({ params }: Props) {
         <p className="mt-3">{page.lede}</p>
       </Prose>
 
-      <StatGrid cols={3}>
-        <div className="mt-6 contents">
+      <StatGrid cols={3} className="mt-6">
           <Stat label={`${EXAMPLE_KW} kW after subsidy`} value={rupees(page.worked.net)} emphasis />
           <Stat label="Generation" value={`${formatIndianNumber(page.generation.kwhPerKwp)} kWh`} sub="per kWp per year" />
           <Stat label="Pays back in" value={page.worked.payback} sub={`on ${EXAMPLE_UNITS} units a month`} />
-        </div>
       </StatGrid>
 
       {/* Price table */}

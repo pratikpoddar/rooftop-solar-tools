@@ -90,6 +90,26 @@ export default async function StateSubsidyPage({ params }: Props) {
       </Prose>
       <VerifiedStamp date={page.lastVerified} confidence={page.confidence} className="mt-3" />
 
+      {page.provisionalTopUp && topUp?.applicationPortal ? (
+        <Callout tone="warn" className="mt-4" title={`The ${topUp.agency} half is budget-dependent`}>
+          <p>
+            The central PM Surya Ghar subsidy is a firm entitlement.
+            The state top-up on top of it depends on {page.state.name}&apos;s budget allocation, has changed terms
+            before, and pauses when the allocation is exhausted.
+          </p>
+          <p>
+            <a
+              href={topUp.applicationPortal}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-semibold text-[var(--accent)] underline underline-offset-2"
+            >
+              Check current availability with {topUp.agency} →
+            </a>
+          </p>
+        </Callout>
+      ) : null}
+
       {/* Subsidy by size */}
       <section className="mt-8">
         <SectionHeading>Subsidy by system size in {page.state.name}</SectionHeading>

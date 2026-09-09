@@ -21,15 +21,22 @@ export const STATE_TOP_UPS: StateTopUp[] = [
     varies: false,
     incomeCeiling: null,
     conditions: [
-      "Flat Rs 10,000 for systems from 1 kW to 10 kW.",
-      "No income limit.",
-      "Credited 2-4 weeks after the central subsidy DBT — no separate form.",
+      "Nominally Rs 10,000 for systems from 1 kW to 10 kW, with no income limit.",
+      "Budget-dependent and in flux: the state allocation is finite and the scheme has changed terms before. Confirm it is still open and still at this amount with GEDA before you sign anything.",
+      "When it is running, it is credited 2-4 weeks after the central subsidy DBT with no separate form.",
     ],
     applicationPortal: "https://suryagujarat.guvnl.in",
     separateApplication: false,
     status: "active",
+    /**
+     * Deliberately NOT "verified", even though the amount is widely quoted.
+     * The figure is budget-dependent rather than a standing entitlement, so
+     * presenting it with the same confidence as the central CFA would overstate
+     * what a buyer can count on. The badge and the check-availability link are
+     * the honest treatment.
+     */
     lastVerified: VERIFIED_ON,
-    confidence: "verified",
+    confidence: "approximate",
     source: "geda-surya-gujarat",
   },
   {

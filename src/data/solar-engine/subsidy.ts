@@ -54,6 +54,16 @@ export function stateTopUpAmount(
   return topUp.amount ?? 0;
 }
 
+/**
+ * True when a state top-up is a real figure we cannot vouch for — a capital
+ * amount that is budget-dependent or otherwise in flux rather than a standing
+ * entitlement. Surfaces should show the number *and* a link to confirm it,
+ * rather than presenting it with the same confidence as the central CFA.
+ */
+export function needsAvailabilityCheck(topUp: StateTopUp | null): boolean {
+  return !!topUp && topUp.topUpType === "capital" && topUp.confidence === "approximate" && !topUp.varies;
+}
+
 export interface SubsidyInput {
   kw: number;
   stateSlug: string;

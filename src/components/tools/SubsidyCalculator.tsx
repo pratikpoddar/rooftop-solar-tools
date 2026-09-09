@@ -5,6 +5,7 @@ import { CompletionPing } from "./CompletionPing";
 import {
   estimateGeneration,
   kwLabel,
+  needsAvailabilityCheck,
   netCost as computeNetCost,
   rupees,
   rupeesShort,
@@ -15,7 +16,7 @@ import { CityField, NextSteps, StateField, ToolFooter, ToolFrame, useLocation } 
 import type { InitialLocation } from "./shared";
 import { STANDARD_SIZES } from "./engine";
 import { SegmentedControl, SizeSlider, Toggle } from "../controls";
-import { Card, HeroStat, LineItems, NoteList, VerifiedStamp } from "../ui";
+import { Callout, Card, HeroStat, LineItems, NoteList, VerifiedStamp } from "../ui";
 import { ShareCard } from "../ShareCard";
 import { en, t } from "@/i18n/en";
 import { NATIONAL_PORTAL } from "@/lib/site";
@@ -121,7 +122,12 @@ export function SubsidyCalculator({
                 {
                   label: topUp?.agency ? `${en.subsidy.stateTopUp} — ${topUp.agency}` : en.subsidy.stateTopUp,
                   value: subsidy.stateCapital > 0 ? rupees(subsidy.stateCapital) : "—",
-                  note: subsidy.stateCapital > 0 ? undefined : en.subsidy.noTopUp,
+                  note:
+                    subsidy.stateCapital === 0
+                      ? en.subsidy.noTopUp
+                      : needsAvailabilityCheck(topUp)
+                        ? en.subsidy.checkAvailability
+                        : undefined,
                   muted: subsidy.stateCapital === 0,
                 },
                 { label: en.subsidy.totalSubsidy, value: rupees(subsidy.total), strong: true },
@@ -141,6 +147,29 @@ export function SubsidyCalculator({
                   },
                 ]}
               />
+            ) : null}
+
+            {needsAvailabilityCheck(topUp) && subsidy.stateCapital > 0 ? (
+              <Callout tone="warn" title={`Confirm the ${topUp?.agency ?? "state"} top-up before you count on it`}>
+                <p>
+                  {rupees(subsidy.stateCapital)} of the total above is a state top-up that depends on the state&apos;s
+                  budget allocation rather than being a standing entitlement. It has changed terms before and can pause
+                  when the allocation runs out. The central{" "}
+                  {rupees(subsidy.central)} is not affected either way.
+                </p>
+                {topUp?.applicationPortal ? (
+                  <p>
+                    <a
+                      href={topUp.applicationPortal}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="font-semibold text-[var(--accent)] underline underline-offset-2"
+                    >
+                      Check current availability with {topUp.agency} →
+                    </a>
+                  </p>
+                ) : null}
+              </Callout>
             ) : null}
 
             <div className="space-y-3 border-t border-[var(--accent-line)] pt-4">

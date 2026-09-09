@@ -24,13 +24,40 @@ function resolveSiteUrl(): string {
   return "https://rooftopsolarindia.netlify.app";
 }
 
+/**
+ * Whether crawlers may index this deployment.
+ *
+ * Production indexes; every other context does not. Deploy previews and branch
+ * deploys share the site's content on a different hostname, so indexing them
+ * would create duplicate content competing with the real pages — the opposite
+ * of what a programmatic-SEO strategy needs.
+ *
+ * NEXT_PUBLIC_ALLOW_INDEXING overrides in either direction, so a launch can be
+ * held back or forced without a code change.
+ */
+function resolveIndexing(): string {
+  const explicit = process.env.NEXT_PUBLIC_ALLOW_INDEXING;
+  if (explicit === "true" || explicit === "false") return explicit;
+
+  // Netlify sets CONTEXT to production | deploy-preview | branch-deploy.
+  if (process.env.NETLIFY) return process.env.CONTEXT === "production" ? "true" : "false";
+
+  // Vercel sets production | preview | development.
+  if (process.env.VERCEL_ENV) return process.env.VERCEL_ENV === "production" ? "true" : "false";
+
+  // Local development: never advertise a laptop to Google.
+  return "false";
+}
+
 const SITE_URL = resolveSiteUrl();
+const ALLOW_INDEXING = resolveIndexing();
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
 
   env: {
     NEXT_PUBLIC_SITE_URL: SITE_URL,
+    NEXT_PUBLIC_ALLOW_INDEXING: ALLOW_INDEXING,
   },
 
   /**

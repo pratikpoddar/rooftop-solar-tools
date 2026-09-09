@@ -17,17 +17,18 @@ export function organizationSchema() {
 }
 
 export function webSiteSchema() {
+  /*
+   * No `potentialAction` / SearchAction here on purpose. Declaring a sitelinks
+   * searchbox tells Google to send queries to /search?q=, and there is no search
+   * page — the URL 404s. Advertising a broken endpoint in structured data is
+   * worse than omitting the feature. Add it back the day a real search page ships.
+   */
   return {
     "@context": "https://schema.org",
     "@type": "WebSite",
     name: SITE.name,
     url: SITE.url,
     inLanguage: "en-IN",
-    potentialAction: {
-      "@type": "SearchAction",
-      target: { "@type": "EntryPoint", urlTemplate: `${SITE.url}/search?q={search_term_string}` },
-      "query-input": "required name=search_term_string",
-    },
   };
 }
 
