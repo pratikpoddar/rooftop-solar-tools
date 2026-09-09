@@ -13,6 +13,7 @@ import {
   getNetMeteringRule,
   getState,
   getStateTopUp,
+  needsAvailabilityCheck,
   netCost,
   peakAndTrough,
   primaryDiscom,
@@ -70,6 +71,8 @@ export interface StateSubsidyPage {
   faqs: { q: string; a: string }[];
   lastVerified: string;
   confidence: "verified" | "approximate";
+  /** The state half is budget-dependent; show a check-availability link. */
+  provisionalTopUp: boolean;
 }
 
 const YEAR = 2026;
@@ -110,22 +113,28 @@ export function buildStateSubsidyPage(stateSlug: string): StateSubsidyPage | nul
     netCost: net,
   });
 
-  // The headline names the money, because that is the query intent.
+  // The headline names the money, because that is the query intent. But when
+  // the state half is budget-dependent, the headline says "up to" rather than
+  // asserting a figure the buyer may not actually receive.
+  const provisional = needsAvailabilityCheck(topUp) && example.stateCapital > 0;
   const titleTail = agency && example.stateCapital > 0 ? ` (Central + ${shortAgency(agency)})` : " (PM Surya Ghar)";
-  const h1 = `Solar subsidy in ${state.name} ${YEAR}: ${rupees(total)} on a ${EXAMPLE_KW} kW system${titleTail}`;
+  const amountPhrase = provisional ? `up to ${rupees(total)}` : rupees(total);
+  const h1 = `Solar subsidy in ${state.name} ${YEAR}: ${amountPhrase} on a ${EXAMPLE_KW} kW system${titleTail}`;
 
   return {
     state,
-    title: `Solar Subsidy in ${state.name} ${YEAR}: ${rupees(total)} Total${titleTail}`,
+    title: `Solar Subsidy in ${state.name} ${YEAR}: ${provisional ? "Up to " : ""}${rupees(total)} Total${titleTail}`,
     h1,
     description: `Exact PM Surya Ghar subsidy for ${state.name} in ${YEAR}: ${rupees(example.central)} central${
       example.stateCapital > 0 ? ` plus ${rupees(example.stateCapital)} from ${agency}` : ""
     } on a ${EXAMPLE_KW} kW rooftop system, what the system costs, and what you pay after subsidy.`,
     lede:
       example.stateCapital > 0
-        ? `${state.name} adds ${rupees(example.stateCapital)} on top of the central subsidy${
-            topUp?.separateApplication ? `, but only if you apply to ${agency} separately` : ", credited automatically after the central payout"
-          }.`
+        ? provisional
+          ? `The central subsidy of ${rupees(example.central)} is a firm entitlement. ${agency} nominally adds ${rupees(example.stateCapital)} on top, but that part is budget-dependent and has changed before — treat it as a bonus to confirm, not money to bank on.`
+          : `${state.name} adds ${rupees(example.stateCapital)} on top of the central subsidy${
+              topUp?.separateApplication ? `, but only if you apply to ${agency} separately` : ", credited automatically after the central payout"
+            }.`
         : `${state.name} has no published state top-up, so your subsidy is the central PM Surya Ghar amount — up to ${rupees(RESIDENTIAL_CFA_CAP)}. Anyone quoting you more than that for a residential system is adding something the scheme does not.`,
     total,
     rows,
@@ -155,6 +164,7 @@ export function buildStateSubsidyPage(stateSlug: string): StateSubsidyPage | nul
     }),
     lastVerified: topUp?.lastVerified ?? "2026-09-08",
     confidence: topUp?.confidence ?? "approximate",
+    provisionalTopUp: provisional,
   };
 }
 
@@ -178,7 +188,11 @@ function stateFaqs(
       q: `How much solar subsidy do I get in ${state.name}?`,
       a:
         n.topUp > 0
-          ? `On a ${EXAMPLE_KW} kW residential system you get ${rupees(n.central)} from the central PM Surya Ghar scheme plus ${rupees(n.topUp)} from ${n.agency}, for ${rupees(n.total)} in total. The central part is ${rupees(30000)} per kW for the first 2 kW and ${rupees(18000)} for the third, capped at ${rupees(RESIDENTIAL_CFA_CAP)}.`
+          ? `On a ${EXAMPLE_KW} kW residential system the central PM Surya Ghar scheme pays ${rupees(n.central)} — ${rupees(30000)} per kW for the first 2 kW and ${rupees(18000)} for the third, capped at ${rupees(RESIDENTIAL_CFA_CAP)}. ${n.agency} nominally adds ${rupees(n.topUp)} on top, taking it to ${rupees(n.total)}.${
+              needsAvailabilityCheck(getStateTopUp(state.slug))
+                ? ` The state half is budget-dependent rather than guaranteed, so confirm it is still open with ${n.agency} before you factor it into your decision.`
+                : ""
+            }`
           : `${rupees(n.total)} on a ${EXAMPLE_KW} kW system, all of it central PM Surya Ghar money: ${rupees(30000)} per kW for the first 2 kW and ${rupees(18000)} for the third kW, capped at ${rupees(RESIDENTIAL_CFA_CAP)}. ${state.name} has no published state top-up as of our last check.`,
     },
     {

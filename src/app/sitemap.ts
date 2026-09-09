@@ -22,6 +22,9 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: absoluteUrl("/solar-subsidy"), lastModified: now, changeFrequency: "monthly", priority: 0.9 },
     { url: absoluteUrl("/solar-panel-price"), lastModified: now, changeFrequency: "monthly", priority: 0.9 },
     { url: absoluteUrl("/sources"), lastModified: now, changeFrequency: "monthly", priority: 0.4 },
+    { url: absoluteUrl("/privacy"), lastModified: now, changeFrequency: "yearly", priority: 0.3 },
+    { url: absoluteUrl("/terms"), lastModified: now, changeFrequency: "yearly", priority: 0.3 },
+    { url: absoluteUrl("/contact"), lastModified: now, changeFrequency: "yearly", priority: 0.3 },
   ];
 
   const states: MetadataRoute.Sitemap = STATES.map((s) => ({

@@ -30,7 +30,8 @@ echo
 echo "Pages"
 for path in / /tools /tools/subsidy-calculator /tools/bill-to-size \
   /tools/savings-payback /tools/loan-emi /solar-subsidy /solar-subsidy/gujarat \
-  /solar-panel-price /solar-panel-price/pune /sources /robots.txt /sitemap.xml; do
+  /solar-panel-price /solar-panel-price/pune /sources /privacy /terms /contact \
+  /robots.txt /sitemap.xml; do
   code="$(curl -sS -o /dev/null -w '%{http_code}' --max-time 30 "$BASE$path" || echo 000)"
   if [ "$code" = "200" ]; then pass "$path"; else fail "$path returned $code"; fi
 done
@@ -120,21 +121,53 @@ check_lead "rejects a lead with no consent" 422 \
 check_lead "rejects a malformed phone number" 400 \
   '{"name":"Smoke Test","phone":"12345","tool":"smoke","sourcePage":"/","consentGiven":true,"consentText":"smoke"}'
 
-# --- indexing gate ----------------------------------------------------------
+# --- consent notice reachable at the point of consent ----------------------
+echo
+echo "Consent notice"
+if grep -q 'href="/privacy"' "$TMP/home.html"; then
+  pass "the consent form links the privacy policy"
+else
+  fail "no /privacy link on the page carrying the consent checkbox"
+fi
+
+# --- indexing: robots.txt, the page meta and the sitemap must agree ---------
 echo
 echo "Indexing"
 robots="$(curl -sS --max-time 30 "$BASE/robots.txt" || true)"
 meta="$(grep -oE '<meta name="robots" content="[^"]*"' "$TMP/home.html" | head -1)"
+# grep -c prints "0" and exits 1 when there are no matches, so an `|| echo 0`
+# fallback appends a second line and breaks the arithmetic below.
+locs="$(curl -sS --max-time 30 "$BASE/sitemap.xml" | grep -c '<loc>')"
+
 if printf '%s' "$robots" | grep -qE '^Disallow: /$'; then
+  # Closed: all three must be shut, or a crawler gets contradictory signals.
   case "$meta" in
-    *noindex*) pass "noindexed and disallowed — consistent (flip NEXT_PUBLIC_ALLOW_INDEXING to launch)" ;;
+    *noindex*)
+      [ "$locs" -eq 0 ] \
+        && pass "closed to crawlers — robots.txt, page meta and empty sitemap agree" \
+        || fail "robots.txt disallows everything but the sitemap still lists $locs URLs" ;;
     *) fail "robots.txt disallows everything but the page meta says '$meta'" ;;
   esac
 else
+  # Open: the sitemap has to actually contain the inventory.
   case "$meta" in
     *noindex*) fail "robots.txt allows crawling but the page meta says noindex — inconsistent" ;;
-    *) pass "open to crawlers, robots.txt and page meta agree" ;;
+    *)
+      if [ "$locs" -lt 50 ]; then
+        fail "open to crawlers but the sitemap only lists $locs URLs — expected the full page inventory"
+      else
+        pass "open to crawlers — robots.txt, page meta and $locs sitemap URLs agree"
+      fi ;;
   esac
+fi
+
+# --- schema must not advertise endpoints that do not exist ------------------
+echo
+echo "Structured data"
+if grep -q 'SearchAction' "$TMP/home.html"; then
+  fail "WebSite schema still declares a SearchAction, but there is no /search page"
+else
+  pass "no SearchAction pointing at a missing /search page"
 fi
 
 echo

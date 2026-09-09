@@ -62,12 +62,10 @@ export default function HomePage() {
           </p>
         </Prose>
 
-        <StatGrid cols={3}>
-          <div className="mt-6 contents">
+        <StatGrid cols={3} className="mt-6">
             <Stat label="Central subsidy, up to" value={rupees(RESIDENTIAL_CFA_CAP)} sub="PM Surya Ghar" />
             <Stat label="Cities with local figures" value="100" sub="generation and tariffs" />
             <Stat label="States and UTs covered" value="36" sub="subsidy and net metering" />
-          </div>
         </StatGrid>
       </section>
 

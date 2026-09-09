@@ -48,6 +48,7 @@ export const en = {
     netCost: "You pay",
     effectivePerKw: "Effective cost per kW",
     noTopUp: "No state top-up published for this state",
+    checkAvailability: "Budget-dependent — confirm it is still open before you count on it",
     generationIncentive: "Generation incentive (paid over {months} months)",
     card: "My solar subsidy: {amount} ({place}).",
   },

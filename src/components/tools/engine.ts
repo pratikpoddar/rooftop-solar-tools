@@ -30,6 +30,7 @@ export {
   hasSlabTable,
   kwLabel,
   loanSchedule,
+  needsAvailabilityCheck,
   netCost,
   primaryDiscom,
   recommendSize,

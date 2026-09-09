@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import { track } from "@/lib/analytics";
 import { en } from "@/i18n/en";
@@ -123,6 +124,20 @@ export function LeadForm({
         </div>
 
         <Toggle label={en.lead.consent} checked={consent} onChange={setConsent} />
+
+        {/*
+          The notice has to be reachable at the moment of consent, not merely
+          somewhere on the site — that is the difference between informed
+          consent and a checkbox.
+        */}
+        <p className="ml-7 -mt-2 text-xs text-[var(--fg-subtle)]">
+          Your name, number and PIN go to those installers and nowhere else. See what we keep and how to have it
+          deleted in our{" "}
+          <Link href="/privacy" className="font-medium text-[var(--accent)] underline underline-offset-2">
+            privacy policy
+          </Link>
+          .
+        </p>
 
         {error ? (
           <p role="alert" className="text-sm font-medium text-[var(--warn)]">

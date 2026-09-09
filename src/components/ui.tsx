@@ -98,8 +98,20 @@ export function Stat({
   );
 }
 
-export function StatGrid({ children, cols = 2 }: { children: ReactNode; cols?: 2 | 3 }) {
-  return <div className={`grid gap-4 ${cols === 3 ? "grid-cols-2 sm:grid-cols-3" : "grid-cols-2"}`}>{children}</div>;
+export function StatGrid({
+  children,
+  cols = 2,
+  className = "",
+}: {
+  children: ReactNode;
+  cols?: 2 | 3;
+  className?: string;
+}) {
+  return (
+    <div className={`grid gap-4 ${cols === 3 ? "grid-cols-2 sm:grid-cols-3" : "grid-cols-2"} ${className}`}>
+      {children}
+    </div>
+  );
 }
 
 /** Label/value rows — the subsidy and cost breakdowns. */
