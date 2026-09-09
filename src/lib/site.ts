@@ -26,7 +26,7 @@ export const SITE = {
    * data-principal requests, so the legal pages render this. Set
    * NEXT_PUBLIC_CONTACT_EMAIL to a mailbox that a person actually reads.
    */
-  contactEmail: process.env.NEXT_PUBLIC_CONTACT_EMAIL ?? "",
+  contactEmail: process.env.NEXT_PUBLIC_CONTACT_EMAIL ?? "pratik.phodu@gmail.com",
   /** Languages the site will serve. Only `en` is built in Phase 0 (spec §7). */
   languages: ["en", "hi", "mr", "gu", "ta", "te", "kn", "ml"] as const,
   defaultLanguage: "en" as const,
