@@ -27,10 +27,14 @@ export const SITE = {
    * NEXT_PUBLIC_CONTACT_EMAIL to a mailbox that a person actually reads.
    */
   contactEmail: process.env.NEXT_PUBLIC_CONTACT_EMAIL ?? "pratik.phodu@gmail.com",
-  /** Languages the site will serve. Only `en` is built in Phase 0 (spec §7). */
-  languages: ["en", "hi", "mr", "gu", "ta", "te", "kn", "ml"] as const,
-  defaultLanguage: "en" as const,
 } as const;
+
+/*
+ * The locale list deliberately does NOT live here. `src/i18n/locales.ts` is the
+ * single source of truth, because it also carries which locales are actually
+ * translated — and a second, flag-less copy of the list in this file was both
+ * unused and already stale the moment Hindi and Marathi launched.
+ */
 
 /**
  * Whether search engines may index this deployment.
