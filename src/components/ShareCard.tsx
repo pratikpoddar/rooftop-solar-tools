@@ -5,7 +5,7 @@ import { track } from "@/lib/analytics";
 import type { CardKind, SessionState } from "@/lib/share";
 import { canShareNatively, ogImageUrl, shortLink, whatsAppLink } from "@/lib/share";
 import { SITE } from "@/lib/site";
-import { en } from "@/i18n/en";
+import { useMessages } from "@/i18n/context";
 import { buttonClasses } from "./ui";
 
 /**
@@ -41,6 +41,7 @@ export function ShareCard({
   session: SessionState;
   tool: string;
 }) {
+  const m = useMessages();
   const [copied, setCopied] = useState(false);
   const link = shortLink(session);
   const message = text;
@@ -81,15 +82,15 @@ export function ShareCard({
           className={`${buttonClasses("whatsapp")} flex-1`}
         >
           <WhatsAppIcon />
-          {en.common.shareOnWhatsApp}
+          {m.common.shareOnWhatsApp}
         </a>
         {canShareNatively() ? (
           <button type="button" onClick={onNativeShare} className={buttonClasses("secondary")}>
-            {en.common.shareResult}
+            {m.common.shareResult}
           </button>
         ) : null}
         <button type="button" onClick={onCopy} className={buttonClasses("secondary")}>
-          {copied ? en.common.copied : en.common.copyLink}
+          {copied ? m.common.copied : m.common.copyLink}
         </button>
       </div>
 

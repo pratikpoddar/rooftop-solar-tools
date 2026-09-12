@@ -22,7 +22,8 @@ import { Callout, Card, HeroStat, LineItems, SectionHeading, Stat, StatGrid, Tab
 import { EmiVsSavingChart } from "../charts";
 import { ShareCard } from "../ShareCard";
 import { ConfidenceBadge } from "../ui";
-import { en, t } from "@/i18n/en";
+import { t } from "@/i18n";
+import { useMessages } from "@/i18n/context";
 import { makeStartTracker } from "@/lib/analytics";
 
 const startTracking = makeStartTracker("emi");
@@ -35,6 +36,7 @@ export interface EmiInitial extends InitialLocation {
 
 /** T5 — the "solar pays for itself from month one" comparison. */
 export function EmiCalculator({ initial = {}, sourcePage }: { initial?: EmiInitial; sourcePage: string }) {
+  const m = useMessages();
   const loc = useLocation(initial);
   const [kw, setKw] = useState(initial.kw ?? 3);
   const [bill, setBill] = useState<number | "">(initial.monthlyBill ?? 2500);
@@ -82,8 +84,8 @@ export function EmiCalculator({ initial = {}, sourcePage }: { initial?: EmiIniti
   return (
     <div className="space-y-6">
       <ToolFrame
-        title={en.emi.title}
-        lede={en.emi.lede}
+        title={m.emi.title}
+        lede={m.emi.lede}
         inputs={
           <>
             <div className="grid gap-4 sm:grid-cols-2">
@@ -91,10 +93,10 @@ export function EmiCalculator({ initial = {}, sourcePage }: { initial?: EmiIniti
               <CityField loc={{ ...loc, setCity: onChange(loc.setCity) }} />
             </div>
             <DiscomField loc={{ ...loc, setDiscomId: onChange(loc.setDiscomId) }} />
-            <SizeSlider label={`${en.common.systemSize}: ${kw} kW`} value={kw} onChange={onChange(setKw)} sizes={STANDARD_SIZES} />
-            <NumberInput label={en.common.monthlyBill} prefix="Rs" value={bill} onChange={onChange(setBill)} step={100} hint="So we can put the EMI next to what you already pay." />
+            <SizeSlider label={`${m.common.systemSize}: ${kw} kW`} value={kw} onChange={onChange(setKw)} sizes={STANDARD_SIZES} />
+            <NumberInput label={m.common.monthlyBill} prefix="Rs" value={bill} onChange={onChange(setBill)} step={100} hint={m.emi.billHint} />
             <SegmentedControl
-              label={en.emi.loanAmount}
+              label={m.emi.loanAmount}
               value={amountMode}
               onChange={onChange(setAmountMode)}
               options={[
@@ -104,7 +106,7 @@ export function EmiCalculator({ initial = {}, sourcePage }: { initial?: EmiIniti
             />
             {amountMode === "custom" ? (
               <NumberInput
-                label="Amount to borrow"
+                label={m.emi.amountToBorrow}
                 prefix="Rs"
                 value={customAmount}
                 onChange={onChange(setCustomAmount)}
@@ -115,13 +117,13 @@ export function EmiCalculator({ initial = {}, sourcePage }: { initial?: EmiIniti
             ) : null}
             <div className="grid gap-4 sm:grid-cols-2">
               <Select
-                label={en.emi.bank}
+                label={m.emi.bank}
                 value={bankId}
                 onChange={onChange(setBankId)}
                 options={BANKS.map((b) => ({ value: b.id, label: `${b.name} — ${b.ratePct}%` }))}
               />
               <Select
-                label={en.emi.tenure}
+                label={m.emi.tenure}
                 value={String(tenure)}
                 onChange={(v) => onChange(setTenure)(Number(v))}
                 options={TENURES.map((y) => ({ value: String(y), label: `${y} years` }))}
@@ -131,19 +133,19 @@ export function EmiCalculator({ initial = {}, sourcePage }: { initial?: EmiIniti
         }
         results={
           <Card tone="accent" className="space-y-5 p-4 sm:p-5">
-            <HeroStat label={en.emi.emi} value={rupees(schedule.emi)} sub={`${bank.name} at ${bank.ratePct}% over ${tenure} years`} />
+            <HeroStat label={m.emi.emi} value={rupees(schedule.emi)} sub={`${bank.name} at ${bank.ratePct}% over ${tenure} years`} />
 
             <div className="rounded-lg border border-[var(--accent-line)] bg-[var(--bg)] p-3">
               <SectionHeading as="h3" className="mb-2">
-                {en.savings.emiVsSaving}
+                {m.savings.emiVsSaving}
               </SectionHeading>
               <EmiVsSavingChart emi={schedule.emi} saving={savings.year1MonthlySaving} />
             </div>
 
             <StatGrid cols={3}>
-              <Stat label="Your bill today" value={rupees(currentBill)} sub={en.common.perMonth} />
-              <Stat label={en.emi.totalInterest} value={rupeesShort(schedule.totalInterest)} sub={`over ${tenure} years`} />
-              <Stat label={en.emi.totalPayable} value={rupeesShort(schedule.totalPayable)} />
+              <Stat label={m.savings.billToday} value={rupees(currentBill)} sub={m.common.perMonth} />
+              <Stat label={m.emi.totalInterest} value={rupeesShort(schedule.totalInterest)} sub={`over ${tenure} years`} />
+              <Stat label={m.emi.totalPayable} value={rupeesShort(schedule.totalPayable)} />
             </StatGrid>
 
             <Callout tone={covered ? "good" : "warn"}>
@@ -156,7 +158,7 @@ export function EmiCalculator({ initial = {}, sourcePage }: { initial?: EmiIniti
 
             <div>
               <SectionHeading as="h3" className="mb-2">
-                {en.emi.bankComparison}
+                {m.emi.bankComparison}
               </SectionHeading>
               <TableWrap>
                 <thead>
@@ -226,7 +228,7 @@ export function EmiCalculator({ initial = {}, sourcePage }: { initial?: EmiIniti
             value2={currentBill}
             place={loc.placeLabel}
             kw={kw}
-            text={t(en.emi.card, { emi: rupees(schedule.emi), bill: rupees(currentBill) })}
+            text={t(m.emi.card, { emi: rupees(schedule.emi), bill: rupees(currentBill) })}
             session={{ t: "emi", s: loc.stateSlug, c: loc.citySlug, d: loc.discomId, k: kw, b: bill === "" ? undefined : bill }}
           />
         }

@@ -14,7 +14,7 @@ import {
   primaryDiscom,
   resolveDiscom,
 } from "./engine";
-import { en } from "@/i18n/en";
+import { useMessages } from "@/i18n/context";
 import { Select } from "../controls";
 import { ButtonLink, Callout, Card, Disclaimer, SectionHeading } from "../ui";
 import { LeadForm } from "../LeadForm";
@@ -82,9 +82,10 @@ export function useLocation(initial: InitialLocation = {}) {
 export type LocationModel = ReturnType<typeof useLocation>;
 
 export function StateField({ loc }: { loc: LocationModel }) {
+  const m = useMessages();
   return (
     <Select
-      label={en.common.state}
+      label={m.common.state}
       value={loc.stateSlug}
       onChange={loc.setStateSlug}
       options={STATES.map((s) => ({ value: s.slug, label: s.name }))}
@@ -93,10 +94,12 @@ export function StateField({ loc }: { loc: LocationModel }) {
 }
 
 export function CityField({ loc }: { loc: LocationModel }) {
+  // Hook before the early return — hooks must run in the same order every render.
+  const m = useMessages();
   if (!loc.cities.length) return null;
   return (
     <Select
-      label={en.common.city}
+      label={m.common.city}
       value={loc.citySlug}
       onChange={loc.setCity}
       options={loc.cities.map((c) => ({ value: c.slug, label: c.name }))}
@@ -105,10 +108,11 @@ export function CityField({ loc }: { loc: LocationModel }) {
 }
 
 export function DiscomField({ loc }: { loc: LocationModel }) {
+  const m = useMessages();
   if (loc.discoms.length < 2) return null;
   return (
     <Select
-      label={en.common.discom}
+      label={m.common.discom}
       value={loc.discomId}
       onChange={loc.setDiscomId}
       options={loc.discoms.map((d) => ({ value: d.id, label: d.name }))}
@@ -166,10 +170,11 @@ export function ToolFooter({
   sourcePage: string;
   share: ReactNode;
 }) {
+  const m = useMessages();
   return (
     <div className="space-y-4">
       <div className="space-y-3">
-        <SectionHeading as="h3">{en.common.shareResult}</SectionHeading>
+        <SectionHeading as="h3">{m.common.shareResult}</SectionHeading>
         {share}
       </div>
       <LeadForm
@@ -186,8 +191,9 @@ export function ToolFooter({
 }
 
 export function NextSteps({ steps }: { steps: { label: string; href?: string }[] }) {
+  const m = useMessages();
   return (
-    <Callout title={en.common.nextSteps}>
+    <Callout title={m.common.nextSteps}>
       <ol className="space-y-1.5">
         {steps.map((s, i) => (
           <li key={s.label} className="flex gap-2">

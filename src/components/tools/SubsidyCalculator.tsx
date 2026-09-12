@@ -19,7 +19,8 @@ import { SegmentedControl, SizeSlider, Toggle } from "../controls";
 import { Callout, Card, HeroStat, LineItems, NoteList, VerifiedStamp } from "../ui";
 import { ShareCard } from "../ShareCard";
 import { SubsidyUrgency } from "../SubsidyUrgency";
-import { en, t } from "@/i18n/en";
+import { t } from "@/i18n";
+import { useMessages } from "@/i18n/context";
 import { NATIONAL_PORTAL } from "@/lib/site";
 import { makeStartTracker } from "@/lib/analytics";
 
@@ -35,6 +36,7 @@ export function SubsidyCalculator({
   initialKw?: number;
   sourcePage: string;
 }) {
+  const m = useMessages();
   const loc = useLocation(initial);
   const [kw, setKw] = useState(initialKw);
   const [consumerType, setConsumerType] = useState<"individual" | "society">("individual");
@@ -82,30 +84,30 @@ export function SubsidyCalculator({
   return (
     <div className="space-y-6">
       <ToolFrame
-        title={en.subsidy.title}
-        lede={en.subsidy.lede}
+        title={m.subsidy.title}
+        lede={m.subsidy.lede}
         inputs={
           <>
             <div className="grid gap-4 sm:grid-cols-2">
               <StateField loc={{ ...loc, setStateSlug: onChange(loc.setStateSlug) }} />
               <CityField loc={{ ...loc, setCity: onChange(loc.setCity) }} />
             </div>
-            <SizeSlider label={`${en.common.systemSize}: ${kwLabel(kw)}`} value={kw} onChange={onChange(setKw)} sizes={STANDARD_SIZES} />
+            <SizeSlider label={`${m.common.systemSize}: ${kwLabel(kw)}`} value={kw} onChange={onChange(setKw)} sizes={STANDARD_SIZES} />
             <SegmentedControl
-              label={en.subsidy.consumerType}
+              label={m.subsidy.consumerType}
               value={consumerType}
               onChange={onChange(setConsumerType)}
               options={[
-                { value: "individual", label: en.subsidy.individual },
-                { value: "society", label: en.subsidy.society },
+                { value: "individual", label: m.subsidy.individual },
+                { value: "society", label: m.subsidy.society },
               ]}
             />
             {consumerType === "individual" && topUp?.bpl ? (
-              <Toggle label={en.subsidy.bpl} hint={`${topUp.agency} pays more to BPL households on systems up to ${topUp.bpl.maxKw} kW.`} checked={bpl} onChange={onChange(setBpl)} />
+              <Toggle label={m.subsidy.bpl} hint={`${topUp.agency} pays more to BPL households on systems up to ${topUp.bpl.maxKw} kW.`} checked={bpl} onChange={onChange(setBpl)} />
             ) : null}
             {consumerType === "individual" && topUp?.incomeCeiling ? (
               <Toggle
-                label={en.subsidy.withinIncomeCeiling}
+                label={m.subsidy.withinIncomeCeiling}
                 hint={`${topUp.agency} applies a ceiling of about Rs ${(topUp.incomeCeiling.minRs / 100000).toFixed(0)}-${(topUp.incomeCeiling.maxRs / 100000).toFixed(0)} lakh.`}
                 checked={withinCeiling}
                 onChange={onChange(setWithinCeiling)}
@@ -115,26 +117,26 @@ export function SubsidyCalculator({
         }
         results={
           <Card tone="accent" className="space-y-5 p-4 sm:p-5">
-            <HeroStat label={en.subsidy.totalSubsidy} value={rupees(subsidy.total)} sub={`for a ${kwLabel(kw)} system in ${loc.state?.name}`} />
+            <HeroStat label={m.subsidy.totalSubsidy} value={rupees(subsidy.total)} sub={`for a ${kwLabel(kw)} system in ${loc.state?.name}`} />
 
             <LineItems
               items={[
-                { label: en.subsidy.centralSubsidy, value: rupees(subsidy.central) },
+                { label: m.subsidy.centralSubsidy, value: rupees(subsidy.central) },
                 {
-                  label: topUp?.agency ? `${en.subsidy.stateTopUp} — ${topUp.agency}` : en.subsidy.stateTopUp,
+                  label: topUp?.agency ? `${m.subsidy.stateTopUp} — ${topUp.agency}` : m.subsidy.stateTopUp,
                   value: subsidy.stateCapital > 0 ? rupees(subsidy.stateCapital) : "—",
                   note:
                     subsidy.stateCapital === 0
-                      ? en.subsidy.noTopUp
+                      ? m.subsidy.noTopUp
                       : needsAvailabilityCheck(topUp)
-                        ? en.subsidy.checkAvailability
+                        ? m.subsidy.checkAvailability
                         : undefined,
                   muted: subsidy.stateCapital === 0,
                 },
-                { label: en.subsidy.totalSubsidy, value: rupees(subsidy.total), strong: true },
-                { label: en.subsidy.systemCost, value: rupees(cost.gross), note: `Range ${rupeesShort(cost.grossMin)}–${rupeesShort(cost.grossMax)} at Rs ${cost.perWatt}/W` },
-                { label: en.subsidy.netCost, value: rupees(net), strong: true },
-                { label: en.subsidy.effectivePerKw, value: rupees(kw > 0 ? net / kw : 0), muted: true },
+                { label: m.subsidy.totalSubsidy, value: rupees(subsidy.total), strong: true },
+                { label: m.subsidy.systemCost, value: rupees(cost.gross), note: `Range ${rupeesShort(cost.grossMin)}–${rupeesShort(cost.grossMax)} at Rs ${cost.perWatt}/W` },
+                { label: m.subsidy.netCost, value: rupees(net), strong: true },
+                { label: m.subsidy.effectivePerKw, value: rupees(kw > 0 ? net / kw : 0), muted: true },
               ]}
             />
 
@@ -142,7 +144,7 @@ export function SubsidyCalculator({
               <LineItems
                 items={[
                   {
-                    label: t(en.subsidy.generationIncentive, { months: subsidy.stateGeneration.months }),
+                    label: t(m.subsidy.generationIncentive, { months: subsidy.stateGeneration.months }),
                     value: `≈ ${rupees(subsidy.stateGeneration.estimatedTotal)}`,
                     note: `About Rs ${subsidy.stateGeneration.ratePerKwh}/unit on your generation. Paid monthly, not off the invoice — so it is not added to the total above.`,
                   },
@@ -199,7 +201,7 @@ export function SubsidyCalculator({
             value2={net}
             place={loc.state?.name ?? "India"}
             kw={kw}
-            text={t(en.subsidy.card, { amount: rupees(subsidy.total), place: loc.state?.name ?? "India" })}
+            text={t(m.subsidy.card, { amount: rupees(subsidy.total), place: loc.state?.name ?? "India" })}
             session={{ t: "subsidy", s: loc.stateSlug, c: loc.citySlug, d: loc.discomId, k: kw }}
           />
         }

@@ -94,3 +94,28 @@ export const SCRIPT_FONTS: Record<string, string | null> = {
   kannada: "Noto Sans Kannada",
   malayalam: "Noto Sans Malayalam",
 };
+
+/**
+ * Paths that exist in every launched locale.
+ *
+ * Only these get an hreflang cluster and a language switcher. The programmatic
+ * state, city and comparison pages draw their headlines, ledes and FAQs from
+ * `src/lib/pages.ts` and `src/lib/compare.ts`, which are still English template
+ * functions — routing them per-locale would serve a Hindi chrome wrapped around
+ * an English page and tell Google it was Hindi.
+ *
+ * Adding a path here is therefore the same kind of deliberate act as flipping
+ * `launched`: it asserts the page is fully translated, not merely reachable.
+ */
+export const LOCALIZED_ROUTES = [
+  "/tools/subsidy-calculator",
+  "/tools/bill-to-size",
+  "/tools/savings-payback",
+  "/tools/loan-emi",
+] as const;
+
+export type LocalizedRoute = (typeof LOCALIZED_ROUTES)[number];
+
+export function isLocalizedRoute(path: string): path is LocalizedRoute {
+  return (LOCALIZED_ROUTES as readonly string[]).includes(path);
+}

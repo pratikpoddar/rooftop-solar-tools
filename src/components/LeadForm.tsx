@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { track } from "@/lib/analytics";
-import { en } from "@/i18n/en";
+import { useMessages } from "@/i18n/context";
 import { NumberInput, Toggle } from "./controls";
 import { Callout, Card, SectionHeading, buttonClasses } from "./ui";
 
@@ -33,6 +33,7 @@ export function LeadForm({
   monthlyBill?: number;
   sourcePage: string;
 }) {
+  const m = useMessages();
   const [name, setName] = useState("");
   const [phone, setPhone] = useState<number | "">("");
   const [pin, setPin] = useState<number | "">("");
@@ -47,8 +48,8 @@ export function LeadForm({
     e.preventDefault();
     setError(null);
 
-    if (!consent) return setError(en.lead.consentRequired);
-    if (!phoneValid) return setError(en.lead.phoneInvalid);
+    if (!consent) return setError(m.lead.consentRequired);
+    if (!phoneValid) return setError(m.lead.phoneInvalid);
 
     setStatus("sending");
     try {
@@ -67,7 +68,7 @@ export function LeadForm({
           tool,
           sourcePage,
           consentGiven: true,
-          consentText: en.lead.consent,
+          consentText: m.lead.consent,
         }),
       });
       if (!res.ok) throw new Error(String(res.status));
@@ -75,14 +76,14 @@ export function LeadForm({
       track("lead_submitted", { tool, state: stateSlug, city: citySlug, kw });
     } catch {
       setStatus("error");
-      setError(en.lead.error);
+      setError(m.lead.error);
     }
   }
 
   if (status === "done") {
     return (
       <Card tone="soft" className="p-4">
-        <Callout tone="good" title={en.lead.success}>
+        <Callout tone="good" title={m.lead.success}>
           <p>They will quote against your city&apos;s price band, which you can see above — so you can tell a fair quote from a padded one.</p>
         </Callout>
       </Card>
@@ -91,13 +92,13 @@ export function LeadForm({
 
   return (
     <Card tone="soft" className="p-4">
-      <SectionHeading as="h3">{en.lead.title}</SectionHeading>
-      <p className="mt-1 text-sm text-[var(--fg-muted)]">{en.lead.lede}</p>
+      <SectionHeading as="h3">{m.lead.title}</SectionHeading>
+      <p className="mt-1 text-sm text-[var(--fg-muted)]">{m.lead.lede}</p>
 
       <form onSubmit={onSubmit} className="mt-4 space-y-4">
         <div className="space-y-1.5">
           <label htmlFor="lead-name" className="block text-sm font-medium">
-            {en.lead.name}
+            {m.lead.name}
           </label>
           <input
             id="lead-name"
@@ -112,7 +113,7 @@ export function LeadForm({
 
         <div className="grid gap-4 sm:grid-cols-2">
           <NumberInput
-            label={en.lead.phone}
+            label={m.lead.phone}
             prefix="+91"
             value={phone}
             onChange={setPhone}
@@ -120,10 +121,10 @@ export function LeadForm({
             min={6000000000}
             max={9999999999}
           />
-          <NumberInput label={en.lead.pin} value={pin} onChange={setPin} placeholder="400001" min={100000} max={999999} />
+          <NumberInput label={m.lead.pin} value={pin} onChange={setPin} placeholder="400001" min={100000} max={999999} />
         </div>
 
-        <Toggle label={en.lead.consent} checked={consent} onChange={setConsent} />
+        <Toggle label={m.lead.consent} checked={consent} onChange={setConsent} />
 
         {/*
           The notice has to be reachable at the moment of consent, not merely
@@ -146,7 +147,7 @@ export function LeadForm({
         ) : null}
 
         <button type="submit" disabled={status === "sending"} className={`${buttonClasses("primary")} w-full`}>
-          {status === "sending" ? en.lead.submitting : en.lead.submit}
+          {status === "sending" ? m.lead.submitting : m.lead.submit}
         </button>
 
         <p className="text-xs text-[var(--fg-subtle)]">

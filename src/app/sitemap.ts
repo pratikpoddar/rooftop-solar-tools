@@ -1,6 +1,7 @@
 import type { MetadataRoute } from "next";
 import { PHASE0_CITY_PAGES, STATES, citiesByPriority } from "@/data/solar-engine";
 import { comparisonPairs } from "@/lib/compare";
+import { LOCALIZED_ROUTES, PREFIXED_LOCALES, localePath } from "@/i18n/locales";
 import { INDEXING_ALLOWED, absoluteUrl } from "@/lib/site";
 
 /**
@@ -50,5 +51,16 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority: 0.6,
   }));
 
-  return [...statics, ...states, ...cities, ...comparisons];
+  // Localized calculators. Only routes listed in LOCALIZED_ROUTES are emitted,
+  // since those are the ones that actually exist in every launched locale.
+  const localized: MetadataRoute.Sitemap = PREFIXED_LOCALES.flatMap((lang) =>
+    LOCALIZED_ROUTES.map((path) => ({
+      url: absoluteUrl(localePath(lang, path)),
+      lastModified: now,
+      changeFrequency: "monthly" as const,
+      priority: 0.7,
+    })),
+  );
+
+  return [...statics, ...states, ...cities, ...comparisons, ...localized];
 }

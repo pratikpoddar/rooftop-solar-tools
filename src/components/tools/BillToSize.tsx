@@ -20,7 +20,8 @@ import { NumberInput, SegmentedControl, Select } from "../controls";
 import { Card, Callout, HeroStat, LineItems, NoteList, Stat, StatGrid } from "../ui";
 import { ShareCard } from "../ShareCard";
 import { ButtonLink } from "../ui";
-import { en, t } from "@/i18n/en";
+import { t } from "@/i18n";
+import { useMessages } from "@/i18n/context";
 import { makeStartTracker } from "@/lib/analytics";
 
 const startTracking = makeStartTracker("size");
@@ -34,6 +35,7 @@ export function BillToSize({
   initial?: InitialLocation;
   sourcePage: string;
 }) {
+  const m = useMessages();
   const loc = useLocation(initial);
   const [mode, setMode] = useState<"bill" | "units">("bill");
   const [bill, setBill] = useState<number | "">(2500);
@@ -76,8 +78,8 @@ export function BillToSize({
   return (
     <div className="space-y-6">
       <ToolFrame
-        title={en.size.title}
-        lede={en.size.lede}
+        title={m.size.title}
+        lede={m.size.lede}
         inputs={
           <>
             <div className="grid gap-4 sm:grid-cols-2">
@@ -86,36 +88,36 @@ export function BillToSize({
             </div>
             <DiscomField loc={{ ...loc, setDiscomId: onChange(loc.setDiscomId) }} />
             <SegmentedControl
-              label="What do you know?"
+              label={m.common.whatDoYouKnow}
               value={mode}
               onChange={onChange(setMode)}
               options={[
-                { value: "bill", label: "My bill amount" },
-                { value: "units", label: "My units" },
+                { value: "bill", label: m.common.myBillAmount },
+                { value: "units", label: m.common.myUnits },
               ]}
             />
             {mode === "bill" ? (
               <NumberInput
-                label={en.common.monthlyBill}
+                label={m.common.monthlyBill}
                 prefix="Rs"
                 value={bill}
                 onChange={onChange(setBill)}
                 step={100}
-                hint="Use a normal month, not a peak summer bill."
+                hint={m.size.billHint}
               />
             ) : (
               <NumberInput
-                label={en.common.monthlyUnits}
+                label={m.common.monthlyUnits}
                 suffix="kWh"
                 value={units}
                 onChange={onChange(setUnits)}
                 step={10}
-                hint="Printed on your bill, usually next to the meter reading."
+                hint={m.size.unitsHint}
               />
             )}
             <Select
-              label={en.common.sanctionedLoad}
-              hint="On your bill as sanctioned load or contracted demand. Your system cannot exceed it without a DISCOM application."
+              label={m.common.sanctionedLoad}
+              hint={m.size.loadHint}
               value={String(sanctionedLoad)}
               onChange={(v) => onChange(setSanctionedLoad)(Number(v))}
               options={SANCTIONED_LOADS.map((l) => ({ value: String(l), label: `${l} kW` }))}
@@ -125,22 +127,26 @@ export function BillToSize({
         results={
           <Card tone="accent" className="space-y-5 p-4 sm:p-5">
             <HeroStat
-              label={en.size.recommended}
+              label={m.size.recommended}
               value={kwLabel(kw)}
-              sub={t(en.size.offsetShare, { pct: offsetPct })}
+              sub={t(m.size.offsetShare, { pct: offsetPct })}
             />
 
             <StatGrid cols={3}>
-              <Stat label="Your usage" value={`${formatIndianNumber(rec.monthlyUnits)} units`} sub="per month" />
-              <Stat label={en.size.roofNeeded} value={`${formatIndianNumber(rec.roof.usableSqft)} sq ft`} sub="shadow-free" />
-              <Stat label={en.size.idealSize} value={kwLabel(rec.idealKw)} sub="before rounding" />
+              <Stat
+                label={m.size.yourUsage}
+                value={`${formatIndianNumber(rec.monthlyUnits)} ${m.common.unitsPerMonth}`}
+                sub={m.common.perMonth}
+              />
+              <Stat label={m.size.roofNeeded} value={`${formatIndianNumber(rec.roof.usableSqft)} sq ft`} sub="shadow-free" />
+              <Stat label={m.size.idealSize} value={kwLabel(rec.idealKw)} sub="before rounding" />
             </StatGrid>
 
             <LineItems
               items={[
-                { label: en.subsidy.systemCost, value: rupees(cost.gross), note: `Range ${rupeesShort(cost.grossMin)}–${rupeesShort(cost.grossMax)}` },
-                { label: en.subsidy.totalSubsidy, value: `− ${rupees(subsidy.total)}` },
-                { label: en.subsidy.netCost, value: rupees(net), strong: true },
+                { label: m.subsidy.systemCost, value: rupees(cost.gross), note: `Range ${rupeesShort(cost.grossMin)}–${rupeesShort(cost.grossMax)}` },
+                { label: m.subsidy.totalSubsidy, value: `− ${rupees(subsidy.total)}` },
+                { label: m.subsidy.netCost, value: rupees(net), strong: true },
               ]}
             />
 
@@ -180,7 +186,7 @@ export function BillToSize({
             value2={net}
             place={loc.placeLabel}
             kw={kw}
-            text={t(en.size.card, { kw: String(kw), place: loc.placeLabel })}
+            text={t(m.size.card, { kw: String(kw), place: loc.placeLabel })}
             session={{ t: "size", s: loc.stateSlug, c: loc.citySlug, d: loc.discomId, u: rec.monthlyUnits }}
           />
         }
