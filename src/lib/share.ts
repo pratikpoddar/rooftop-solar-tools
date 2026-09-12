@@ -66,6 +66,15 @@ export interface SessionState {
   u?: number;
   /** Monthly bill in Rs. */
   b?: number;
+  /**
+   * Sender's locale.
+   *
+   * Carried through the share so the recipient opens the calculator in the
+   * language the sender was reading. Someone sharing a Tamil result is almost
+   * always sharing it with another Tamil reader, and dropping the locale here
+   * broke the loop at exactly the handoff it depends on.
+   */
+  l?: string;
 }
 
 function toBase64Url(input: string): string {

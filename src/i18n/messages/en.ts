@@ -38,6 +38,8 @@ export const en = {
     privacy: "Privacy policy",
     terms: "Terms of use",
     contact: "Contact",
+    footerDisclaimer:
+      "We are not an installer and we do not sell hardware. Estimates are based on published central and state rates, SERC tariff orders and MNRE generation data; your installer quote and DISCOM approval are final. We never sell your personal data — the only thing that happens with your details is an introduction you explicitly asked for.",
     skipToContent: "Skip to content",
   },
 
@@ -231,6 +233,28 @@ export const en = {
     body: "PM Surya Ghar is a fixed-outlay scheme — Rs 75,021 crore across a target of 1 crore households — so the central subsidy is finite rather than permanent.",
     stateBudget: "{agency}'s top-up is budget-dependent on top of that and pauses when the state allocation runs out.",
     honest: "There is no published deadline, and we will not invent one. But the money is allocated, not unlimited.",
+  },
+
+  card: {
+    myRooftopIn: "My {kw} kW rooftop in {place}",
+    myRooftop: "My rooftop in {place}",
+    offMyBill: "off my electricity bill",
+    savedOver25: "saved over 25 years",
+    toPayBack: "to pay back",
+    governmentSubsidy: "government subsidy",
+    over25Years: "over 25 years",
+    mySubsidyIn: "My solar subsidy in {place}",
+    paidByGovernment: "paid by the government",
+    isAllItCosts: "is all a {kw} kW system costs me",
+    solarLoanEmi: "solar loan EMI",
+    myOldBill: "my old electricity bill",
+    myRoofIn: "My roof in {place}",
+    rightSizeForBill: "is the right size for my bill",
+    afterSubsidy: "after subsidy",
+    solarPayback: "Solar payback",
+    comparedOnSame: "compared on the same {kw} kW system",
+    checkYours: "Check yours — free, no signup",
+    yrs: "yrs",
   },
 
   lead: {

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { decodeSession } from "@/lib/share";
+import { DEFAULT_LOCALE, isLaunched, isLocale, localePath } from "@/i18n/locales";
 
 /**
  * Short links (spec §4.2).
@@ -37,7 +38,12 @@ export default async function ShortLinkPage({ params }: Props) {
 
   if (!session) redirect("/");
 
-  const base = TOOL_PATHS[session.t] ?? "/tools/savings-payback";
+  const tool = TOOL_PATHS[session.t] ?? "/tools/savings-payback";
+
+  // Reopen in the sender's language when they had one, so a shared Tamil
+  // result does not land the recipient in English.
+  const lang = session.l && isLocale(session.l) && isLaunched(session.l) ? session.l : DEFAULT_LOCALE;
+  const base = localePath(lang, tool);
   const q = new URLSearchParams();
   if (session.s) q.set("state", session.s);
   if (session.c) q.set("city", session.c);

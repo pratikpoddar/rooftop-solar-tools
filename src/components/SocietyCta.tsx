@@ -2,7 +2,7 @@
 
 import { GHS_RATE_PER_KW, rupees } from "@/data/solar-engine";
 import { t } from "@/i18n";
-import { useMessages } from "@/i18n/context";
+import { useLocale, useMessages } from "@/i18n/context";
 import { track } from "@/lib/analytics";
 import { shortLink, whatsAppLink, type SessionState } from "@/lib/share";
 import { SITE } from "@/lib/site";
@@ -32,7 +32,8 @@ export function SocietyCta({
   tool: string;
 }) {
   const m = useMessages();
-  const link = shortLink({ ...session, t: "savings" });
+  const lang = useLocale();
+  const link = shortLink({ ...session, t: "savings", l: lang });
   const message = t(m.society.shareText, {
     kw,
     place,

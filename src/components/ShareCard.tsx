@@ -5,7 +5,7 @@ import { track } from "@/lib/analytics";
 import type { CardKind, SessionState } from "@/lib/share";
 import { canShareNatively, ogImageUrl, shortLink, whatsAppLink } from "@/lib/share";
 import { SITE } from "@/lib/site";
-import { useMessages } from "@/i18n/context";
+import { useLocale, useMessages } from "@/i18n/context";
 import { buttonClasses } from "./ui";
 
 /**
@@ -42,8 +42,11 @@ export function ShareCard({
   tool: string;
 }) {
   const m = useMessages();
+  const lang = useLocale();
   const [copied, setCopied] = useState(false);
-  const link = shortLink(session);
+  // Stamp the locale here rather than at each call site, so a new share
+  // surface cannot forget it.
+  const link = shortLink({ ...session, l: lang });
   const message = text;
   const waHref = whatsAppLink(`${text} Check yours on ${SITE.name}:`, link);
 
@@ -99,7 +102,7 @@ export function ShareCard({
         <summary className="cursor-pointer">Preview the card</summary>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src={ogImageUrl({ kind, value, value2, place, kw, payback, monthly })}
+          src={ogImageUrl({ kind, value, value2, place, kw, payback, monthly, lang })}
           alt={text}
           width={1200}
           height={630}

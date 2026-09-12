@@ -7,6 +7,7 @@ import { ENGINE_VERSION } from "@/data/solar-engine";
 import { Container } from "./ui";
 import { getMessages } from "@/i18n";
 import { DEFAULT_LOCALE, isLocale, localePath, type Locale } from "@/i18n/locales";
+import type { ReactNode } from "react";
 
 const TOOL_PATHS = [
   "/tools/subsidy-calculator",
@@ -92,6 +93,32 @@ export function SiteHeader() {
   );
 }
 
+/**
+ * A footer link whose destination is only available in English.
+ *
+ * The label is localized so the reader knows what the link is, but the
+ * destination is not translated yet — so the anchor carries hrefLang="en" and a
+ * visible marker. Silently handing a Tamil reader an English page is the kind
+ * of small dishonesty that costs more trust than it saves effort.
+ */
+function EnglishOnlyLink({ href, lang, children }: { href: string; lang: Locale; children: ReactNode }) {
+  const isEnglish = lang === DEFAULT_LOCALE;
+  return (
+    <Link
+      href={href}
+      hrefLang={isEnglish ? undefined : "en"}
+      className="hover:text-[var(--accent)] hover:underline"
+    >
+      {children}
+      {isEnglish ? null : (
+        <span className="ml-1 rounded border border-[var(--line)] px-1 text-[10px] uppercase tracking-wide text-[var(--fg-subtle)]">
+          EN
+        </span>
+      )}
+    </Link>
+  );
+}
+
 export function SiteFooter() {
   const lang = useLang();
   const m = getMessages(lang);
@@ -119,19 +146,19 @@ export function SiteFooter() {
             <p className="font-semibold text-[var(--fg)]">{m.nav.byPlace}</p>
             <ul className="mt-2 space-y-1.5">
               <li>
-                <Link href="/solar-subsidy" className="hover:text-[var(--accent)] hover:underline">
+                <EnglishOnlyLink href="/solar-subsidy" lang={lang}>
                   {m.nav.subsidyByState}
-                </Link>
+                </EnglishOnlyLink>
               </li>
               <li>
-                <Link href="/solar-panel-price" className="hover:text-[var(--accent)] hover:underline">
+                <EnglishOnlyLink href="/solar-panel-price" lang={lang}>
                   {m.nav.priceByCity}
-                </Link>
+                </EnglishOnlyLink>
               </li>
               <li>
-                <Link href="/compare" className="hover:text-[var(--accent)] hover:underline">
+                <EnglishOnlyLink href="/compare" lang={lang}>
                   City vs city
-                </Link>
+                </EnglishOnlyLink>
               </li>
             </ul>
           </div>
@@ -144,9 +171,9 @@ export function SiteFooter() {
                 </a>
               </li>
               <li>
-                <Link href="/sources" className="hover:text-[var(--accent)] hover:underline">
+                <EnglishOnlyLink href="/sources" lang={lang}>
                   {m.nav.whereNumbers}
-                </Link>
+                </EnglishOnlyLink>
               </li>
             </ul>
           </div>
@@ -155,33 +182,30 @@ export function SiteFooter() {
             <p className="font-semibold text-[var(--fg)]">{m.nav.legal}</p>
             <ul className="mt-2 space-y-1.5">
               <li>
-                <Link href="/privacy" className="hover:text-[var(--accent)] hover:underline">
+                <EnglishOnlyLink href="/privacy" lang={lang}>
                   {m.nav.privacy}
-                </Link>
+                </EnglishOnlyLink>
               </li>
               <li>
-                <Link href="/terms" className="hover:text-[var(--accent)] hover:underline">
+                <EnglishOnlyLink href="/terms" lang={lang}>
                   {m.nav.terms}
-                </Link>
+                </EnglishOnlyLink>
               </li>
               <li>
-                <Link href="/contact" className="hover:text-[var(--accent)] hover:underline">
+                <EnglishOnlyLink href="/contact" lang={lang}>
                   {m.nav.contact}
-                </Link>
+                </EnglishOnlyLink>
               </li>
             </ul>
           </div>
         </div>
 
         <p className="border-t border-[var(--line)] pt-4 text-xs leading-relaxed text-[var(--fg-subtle)]">
-          We are not an installer and we do not sell hardware. Estimates are based on published central and state rates,
-          SERC tariff orders and MNRE generation data; your installer quote and DISCOM approval are final. We never sell
-          your personal data — the only thing that happens with your details is an introduction you explicitly asked
-          for, as set out in our{" "}
-          <Link href="/privacy" className="underline hover:text-[var(--accent)]">
-            privacy policy
-          </Link>
-          . Numbers engine v{ENGINE_VERSION}.
+          {m.nav.footerDisclaimer}{" "}
+          <EnglishOnlyLink href="/privacy" lang={lang}>
+            {m.nav.privacy}
+          </EnglishOnlyLink>
+          . {m.common.estimateDisclaimer} v{ENGINE_VERSION}
         </p>
       </Container>
     </footer>
