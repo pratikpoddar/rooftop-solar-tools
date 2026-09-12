@@ -10,11 +10,11 @@ export const LOCALES = [
   { code: "en", english: "English", native: "English", htmlLang: "en-IN", script: "latin", launched: true },
   { code: "hi", english: "Hindi", native: "हिन्दी", htmlLang: "hi-IN", script: "devanagari", launched: true },
   { code: "mr", english: "Marathi", native: "मराठी", htmlLang: "mr-IN", script: "devanagari", launched: true },
-  { code: "gu", english: "Gujarati", native: "ગુજરાતી", htmlLang: "gu-IN", script: "gujarati", launched: false },
-  { code: "ta", english: "Tamil", native: "தமிழ்", htmlLang: "ta-IN", script: "tamil", launched: false },
-  { code: "te", english: "Telugu", native: "తెలుగు", htmlLang: "te-IN", script: "telugu", launched: false },
-  { code: "kn", english: "Kannada", native: "ಕನ್ನಡ", htmlLang: "kn-IN", script: "kannada", launched: false },
-  { code: "ml", english: "Malayalam", native: "മലയാളം", htmlLang: "ml-IN", script: "malayalam", launched: false },
+  { code: "gu", english: "Gujarati", native: "ગુજરાતી", htmlLang: "gu-IN", script: "gujarati", launched: true },
+  { code: "ta", english: "Tamil", native: "தமிழ்", htmlLang: "ta-IN", script: "tamil", launched: true },
+  { code: "te", english: "Telugu", native: "తెలుగు", htmlLang: "te-IN", script: "telugu", launched: true },
+  { code: "kn", english: "Kannada", native: "ಕನ್ನಡ", htmlLang: "kn-IN", script: "kannada", launched: true },
+  { code: "ml", english: "Malayalam", native: "മലയാളം", htmlLang: "ml-IN", script: "malayalam", launched: true },
 ] as const;
 
 /**
@@ -29,6 +29,12 @@ export const LOCALES = [
  * Nothing routes, appears in the switcher, or enters the hreflang cluster until
  * its flag is true. Turning a language on is therefore a deliberate act that
  * follows the translation, rather than a side effect of the file existing.
+ *
+ * All eight catalogues are now genuinely translated, so all eight are flagged.
+ * That makes them *eligible* to be served — it does not serve them. The
+ * /[lang]/ route tree is still to be built, so `localePath()` and
+ * `hreflangAlternates()` currently describe URLs that do not exist yet and are
+ * deliberately not called from any page. Wiring the routes is the last step.
  */
 export const LAUNCHED_LOCALES = LOCALES.filter((l) => l.launched);
 
