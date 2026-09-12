@@ -9,15 +9,23 @@ describe("locale routing", () => {
     expect(localePath("hi", "/")).toBe("/hi");
   });
 
-  it("only routes and advertises locales whose catalogue is actually translated", () => {
-    // An un-launched locale typechecks but holds English text; serving it would
-    // publish duplicate English under an hreflang promising another language.
-    expect(PREFIXED_LOCALES).not.toContain("ta");
-    expect(isLaunched("ta")).toBe(false);
-    expect(isLaunched("hi")).toBe(true);
+  it("routes and advertises exactly the launched locales, whichever those are", () => {
+    // Asserted as a relationship rather than a snapshot, so launching a language
+    // does not require editing the test that guards launching languages.
+    const launched = LOCALES.filter((l) => l.launched).map((l) => l.code);
+    const unlaunched = LOCALES.filter((l) => !l.launched).map((l) => l.code);
+
+    expect(PREFIXED_LOCALES.sort()).toEqual(launched.filter((c) => c !== "en").sort());
+    for (const code of unlaunched) {
+      expect(isLaunched(code), code).toBe(false);
+      expect(PREFIXED_LOCALES, code).not.toContain(code);
+    }
+
     const alt = hreflangAlternates("/tools/subsidy-calculator");
-    expect(Object.keys(alt)).toContain("hi-IN");
-    expect(Object.keys(alt)).not.toContain("ta-IN");
+    for (const l of LOCALES) {
+      const present = Object.keys(alt).includes(l.htmlLang);
+      expect(present, `${l.code} in hreflang cluster`).toBe(l.launched);
+    }
     expect(alt["x-default"]).toBe("/tools/subsidy-calculator");
   });
 
