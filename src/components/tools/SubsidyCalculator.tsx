@@ -18,6 +18,7 @@ import { STANDARD_SIZES } from "./engine";
 import { SegmentedControl, SizeSlider, Toggle } from "../controls";
 import { Callout, Card, HeroStat, LineItems, NoteList, VerifiedStamp } from "../ui";
 import { ShareCard } from "../ShareCard";
+import { SubsidyUrgency } from "../SubsidyUrgency";
 import { en, t } from "@/i18n/en";
 import { NATIONAL_PORTAL } from "@/lib/site";
 import { makeStartTracker } from "@/lib/analytics";
@@ -179,6 +180,8 @@ export function SubsidyCalculator({
           </Card>
         }
       />
+
+      <SubsidyUrgency stateSlug={loc.stateSlug} amount={subsidy.total} />
 
       <NextSteps steps={nextSteps} />
 

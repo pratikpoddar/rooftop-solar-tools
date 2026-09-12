@@ -99,6 +99,11 @@ export function SiteFooter() {
                   Solar price by city
                 </Link>
               </li>
+              <li>
+                <Link href="/compare" className="hover:text-[var(--accent)] hover:underline">
+                  City vs city
+                </Link>
+              </li>
             </ul>
           </div>
           <div>

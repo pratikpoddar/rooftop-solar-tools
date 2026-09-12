@@ -27,6 +27,8 @@ import { Details, NumberInput, PercentSlider, SegmentedControl, SizeSlider } fro
 import { Card, Callout, HeroStat, LineItems, NoteList, SectionHeading, Stat, StatGrid, VerifiedStamp } from "../ui";
 import { CumulativeSavingsChart, EmiVsSavingChart, MonthlyGenerationChart } from "../charts";
 import { ShareCard } from "../ShareCard";
+import { SocietyCta } from "../SocietyCta";
+import { SubsidyUrgency } from "../SubsidyUrgency";
 import { en, t } from "@/i18n/en";
 import { makeStartTracker, track } from "@/lib/analytics";
 
@@ -247,6 +249,16 @@ export function SavingsCalculator({
         }
       />
 
+      <SubsidyUrgency stateSlug={loc.stateSlug} amount={subsidy.total} />
+
+      <SocietyCta
+        kw={kw}
+        place={loc.placeLabel}
+        monthlySaving={savings.year1MonthlySaving}
+        session={{ t: "savings", s: loc.stateSlug, c: loc.citySlug, d: loc.discomId, k: kw, u: monthlyUnits }}
+        tool="savings"
+      />
+
       <ToolFooter
         tool="savings"
         stateSlug={loc.stateSlug}
@@ -262,7 +274,22 @@ export function SavingsCalculator({
             value2={subsidy.total}
             place={loc.placeLabel}
             kw={kw}
-            text={t(en.savings.card, { amount: rupeesShort(savings.lifetimeSaving), place: loc.placeLabel })}
+            payback={savings.paybackYears}
+            monthly={savings.year1MonthlySaving}
+            text={
+              Number.isFinite(savings.paybackYears)
+                ? t(en.savings.card, {
+                    kw,
+                    place: loc.placeLabel,
+                    payback: formatYears(savings.paybackYears),
+                    monthly: rupees(savings.year1MonthlySaving),
+                  })
+                : t(en.savings.cardNoPayback, {
+                    kw,
+                    place: loc.placeLabel,
+                    monthly: rupees(savings.year1MonthlySaving),
+                  })
+            }
             session={{ t: "savings", s: loc.stateSlug, c: loc.citySlug, d: loc.discomId, k: kw, u: monthlyUnits }}
           />
         }

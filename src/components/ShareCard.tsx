@@ -23,6 +23,8 @@ export function ShareCard({
   value2,
   place,
   kw,
+  payback,
+  monthly,
   text,
   session,
   tool,
@@ -32,6 +34,8 @@ export function ShareCard({
   value2?: number;
   place: string;
   kw?: number;
+  payback?: number;
+  monthly?: number;
   /** The line that goes into the WhatsApp message, already localised. */
   text: string;
   session: SessionState;
@@ -94,7 +98,7 @@ export function ShareCard({
         <summary className="cursor-pointer">Preview the card</summary>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src={ogImageUrl({ kind, value, value2, place, kw })}
+          src={ogImageUrl({ kind, value, value2, place, kw, payback, monthly })}
           alt={text}
           width={1200}
           height={630}

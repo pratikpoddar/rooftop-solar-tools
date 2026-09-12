@@ -13,26 +13,7 @@ export const runtime = "edge";
  * share link never needs a database round-trip.
  */
 
-type Kind = "subsidy" | "savings" | "emi" | "size";
-
-const COPY: Record<Kind, { eyebrow: string; caption: (p: Params) => string }> = {
-  subsidy: {
-    eyebrow: "My solar subsidy",
-    caption: (p) => (p.value2 ? `so a ${p.kw} kW system costs me ${rupeesShort(p.value2)}` : "under PM Surya Ghar"),
-  },
-  savings: {
-    eyebrow: "My roof saves this in 25 years",
-    caption: (p) => (p.value2 ? `after a ${rupeesShort(p.value2)} government subsidy` : "after the government subsidy"),
-  },
-  emi: {
-    eyebrow: "My solar EMI",
-    caption: (p) => (p.value2 ? `against an electricity bill of ${rupeesShort(p.value2)} a month` : "instead of an electricity bill"),
-  },
-  size: {
-    eyebrow: "The system my roof needs",
-    caption: (p) => (p.value2 ? `about ${rupeesShort(p.value2)} after subsidy` : "sized from my own bill"),
-  },
-};
+type Kind = "subsidy" | "savings" | "emi" | "size" | "compare";
 
 interface Params {
   kind: Kind;
@@ -40,17 +21,78 @@ interface Params {
   value2?: number;
   place: string;
   kw?: number;
+  /** Payback in years — the most legible number on a savings card. */
+  payback?: number;
+  /** Monthly bill saving in rupees. */
+  monthly?: number;
+  /** Second place name, for the city-vs-city card. */
+  place2?: string;
 }
 
-function placeLine(p: Params): string {
-  return p.kw && p.kind !== "size" ? `${p.place} · ${p.kw} kW` : p.place;
+interface CardCopy {
+  eyebrow: (p: Params) => string;
+  headline: (p: Params) => string;
+  /** Small line under the headline saying what the number is. */
+  subhead: (p: Params) => string;
+  /** Up to two supporting figures rendered as a stat row. */
+  stats: (p: Params) => { value: string; label: string }[];
 }
 
-function headline(p: Params): string {
-  if (p.kind === "size") return `${p.value} kW`;
-  if (p.kind === "emi") return `${rupeesShort(p.value)}/mo`;
-  return rupeesShort(p.value);
+function place(p: Params): string {
+  return p.kw ? `My ${p.kw} kW rooftop in ${p.place}` : `My rooftop in ${p.place}`;
 }
+
+const COPY: Record<Kind, CardCopy> = {
+  savings: {
+    eyebrow: place,
+    /*
+     * Leads with the monthly saving when we have it. "Rs 2,850 a month" is the
+     * sentence a person repeats to a neighbour; "Rs 18.38 lakh over 25 years"
+     * is impressive and unrepeatable. The lifetime figure drops to a stat.
+     */
+    headline: (p) => (p.monthly ? `${rupeesShort(p.monthly)}/mo` : rupeesShort(p.value)),
+    subhead: (p) => (p.monthly ? "off my electricity bill" : "saved over 25 years"),
+    stats: (p) => {
+      const out: { value: string; label: string }[] = [];
+      if (p.payback) out.push({ value: `${p.payback} yrs`, label: "to pay back" });
+      if (p.value2) out.push({ value: rupeesShort(p.value2), label: "government subsidy" });
+      if (p.monthly && out.length < 2) out.push({ value: rupeesShort(p.value), label: "over 25 years" });
+      return out.slice(0, 2);
+    },
+  },
+  subsidy: {
+    eyebrow: (p) => `My solar subsidy in ${p.place}`,
+    headline: (p) => rupeesShort(p.value),
+    subhead: () => "paid by the government",
+    stats: (p) => (p.value2 ? [{ value: rupeesShort(p.value2), label: `is all a ${p.kw ?? 3} kW system costs me` }] : []),
+  },
+  emi: {
+    eyebrow: place,
+    headline: (p) => `${rupeesShort(p.value)}/mo`,
+    subhead: () => "solar loan EMI",
+    stats: (p) => (p.value2 ? [{ value: rupeesShort(p.value2), label: "my old electricity bill" }] : []),
+  },
+  size: {
+    eyebrow: (p) => `My roof in ${p.place}`,
+    headline: (p) => `${p.value} kW`,
+    subhead: () => "is the right size for my bill",
+    stats: (p) => (p.value2 ? [{ value: rupeesShort(p.value2), label: "after subsidy" }] : []),
+  },
+  /*
+   * The comparison card carries both cities as stats rather than declaring a
+   * winner in the headline — the forward value is in the argument it starts,
+   * and the recipient should read their own city's number, not ours.
+   */
+  compare: {
+    eyebrow: (p) => `${p.place} vs ${p.place2 ?? ""}`.trim(),
+    headline: () => "Solar payback",
+    subhead: () => `compared on the same ${3} kW system`,
+    stats: (p) => [
+      { value: `${p.value} yrs`, label: p.place },
+      { value: `${p.value2 ?? "—"} yrs`, label: p.place2 ?? "" },
+    ],
+  },
+};
 
 export async function GET(req: NextRequest) {
   const q = req.nextUrl.searchParams;
@@ -63,12 +105,16 @@ export async function GET(req: NextRequest) {
     value2: q.get("value2") ? Number(q.get("value2")) : undefined,
     place: (q.get("place") ?? "India").slice(0, 40),
     kw: q.get("kw") ? Number(q.get("kw")) : undefined,
+    payback: q.get("payback") ? Number(q.get("payback")) : undefined,
+    monthly: q.get("monthly") ? Number(q.get("monthly")) : undefined,
+    place2: q.get("place2")?.slice(0, 40),
   };
 
   const square = q.get("size") === "sq";
   const width = square ? 1080 : 1200;
   const height = square ? 1080 : 630;
   const copy = COPY[kind];
+  const stats = copy.stats(p);
 
   return new ImageResponse(
     (
@@ -95,23 +141,41 @@ export async function GET(req: NextRequest) {
           <div style={{ display: "flex", fontSize: 30, fontWeight: 700, letterSpacing: -0.5 }}>{SITE.name}</div>
         </div>
 
-        <div style={{ display: "flex", flexDirection: "column", gap: square ? 18 : 10 }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: square ? 18 : 12 }}>
           <div style={{ display: "flex", fontSize: square ? 40 : 36, color: "#fcd34d", fontWeight: 600 }}>
-            {copy.eyebrow}
+            {copy.eyebrow(p)}
           </div>
           <div
             style={{
               display: "flex",
-              fontSize: square ? 168 : 140,
+              fontSize: square ? 150 : 128,
               fontWeight: 800,
               lineHeight: 1,
               letterSpacing: -4,
             }}
           >
-            {headline(p)}
+            {copy.headline(p)}
           </div>
-          <div style={{ display: "flex", fontSize: square ? 42 : 38, color: "#e2e8f0" }}>{placeLine(p)}</div>
-          <div style={{ display: "flex", fontSize: square ? 34 : 30, color: "#94a3b8" }}>{copy.caption(p)}</div>
+          <div style={{ display: "flex", fontSize: square ? 40 : 36, color: "#e2e8f0" }}>{copy.subhead(p)}</div>
+
+          {stats.length ? (
+            <div style={{ display: "flex", gap: square ? 28 : 32, marginTop: square ? 14 : 10 }}>
+              {stats.map((stat) => (
+                <div
+                  key={stat.label}
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    borderLeft: "4px solid #fbbf24",
+                    paddingLeft: 18,
+                  }}
+                >
+                  <div style={{ display: "flex", fontSize: square ? 46 : 42, fontWeight: 700 }}>{stat.value}</div>
+                  <div style={{ display: "flex", fontSize: square ? 28 : 25, color: "#94a3b8" }}>{stat.label}</div>
+                </div>
+              ))}
+            </div>
+          ) : null}
         </div>
 
         <div
