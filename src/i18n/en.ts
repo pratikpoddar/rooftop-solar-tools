@@ -72,7 +72,8 @@ export const en = {
     chartTitle: "Cumulative savings over 25 years",
     monthlyTitle: "Units generated per month",
     emiVsSaving: "EMI vs bill saving",
-    card: "My roof saves {amount} in 25 years. {place}.",
+    card: "My {kw} kW rooftop in {place} pays back in {payback} and saves {monthly} a month after subsidy.",
+    cardNoPayback: "My {kw} kW rooftop in {place} saves {monthly} a month on electricity.",
   },
   emi: {
     title: "Solar loan EMI calculator",
@@ -87,6 +88,20 @@ export const en = {
     bankComparison: "Bank comparison",
     card: "Solar EMI {emi} vs my old bill {bill}.",
   },
+  society: {
+    title: "Live in a society?",
+    body: "Send this to your RWA group. 100 flats is 100 roofs, and a group order usually lands a 5-10% better price than going alone — plus the society's common load (lifts, pumps, corridor lights) gets its own subsidy at {rate} per kW, up to 500 kW.",
+    cta: "Share with my society group",
+    shareText: "Our society should look at this. A {kw} kW rooftop in {place} saves about {monthly} a month per flat. 100 flats = 100 roofs, and a group order gets a better price.",
+  },
+
+  urgency: {
+    title: "{amount} is available today",
+    body: "PM Surya Ghar is a fixed-outlay scheme — Rs 75,021 crore across a target of 1 crore households — so the central subsidy is finite rather than permanent.",
+    stateBudget: "{agency}'s top-up is budget-dependent on top of that and pauses when the state allocation runs out.",
+    honest: "There is no published deadline, and we will not invent one. But the money is allocated, not unlimited.",
+  },
+
   lead: {
     title: "Get 3 free quotes",
     lede: "We introduce you to empanelled installers in your city. No spam, no data sold.",

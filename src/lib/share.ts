@@ -7,7 +7,7 @@ import { SITE, absoluteUrl } from "./site";
  * reopens the tool prefilled to the same city — the recipient starts at step 2.
  */
 
-export type CardKind = "subsidy" | "savings" | "emi" | "size";
+export type CardKind = "subsidy" | "savings" | "emi" | "size" | "compare";
 
 export interface CardParams {
   kind: CardKind;
@@ -18,6 +18,18 @@ export interface CardParams {
   place: string;
   kw?: number;
   lang?: string;
+  /**
+   * Payback in years and the monthly bill saving.
+   *
+   * A 25-year total is the biggest number but the least legible one — nobody
+   * feels "Rs 18 lakh over 25 years". "Rs 2,850 a month, pays back in 5.2
+   * years" is the sentence people actually repeat to a neighbour, so the
+   * savings card leads with those and keeps the lifetime figure as support.
+   */
+  payback?: number;
+  monthly?: number;
+  /** Second place name, for the city-vs-city card. */
+  place2?: string;
 }
 
 export function ogImageUrl(p: CardParams): string {
@@ -29,6 +41,9 @@ export function ogImageUrl(p: CardParams): string {
   if (p.value2 != null) q.set("value2", String(Math.round(p.value2)));
   if (p.kw != null) q.set("kw", String(p.kw));
   if (p.lang) q.set("lang", p.lang);
+  if (p.payback != null && Number.isFinite(p.payback)) q.set("payback", String(p.payback));
+  if (p.monthly != null) q.set("monthly", String(Math.round(p.monthly)));
+  if (p.place2) q.set("place2", p.place2);
   return absoluteUrl(`/api/og?${q.toString()}`);
 }
 

@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
 import { PHASE0_CITY_PAGES, STATES, citiesByPriority } from "@/data/solar-engine";
+import { comparisonPairs } from "@/lib/compare";
 import { INDEXING_ALLOWED, absoluteUrl } from "@/lib/site";
 
 /**
@@ -25,6 +26,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: absoluteUrl("/privacy"), lastModified: now, changeFrequency: "yearly", priority: 0.3 },
     { url: absoluteUrl("/terms"), lastModified: now, changeFrequency: "yearly", priority: 0.3 },
     { url: absoluteUrl("/contact"), lastModified: now, changeFrequency: "yearly", priority: 0.3 },
+    { url: absoluteUrl("/compare"), lastModified: now, changeFrequency: "monthly", priority: 0.7 },
   ];
 
   const states: MetadataRoute.Sitemap = STATES.map((s) => ({
@@ -41,5 +43,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority: c.priority <= 20 ? 0.8 : 0.6,
   }));
 
-  return [...statics, ...states, ...cities];
+  const comparisons: MetadataRoute.Sitemap = comparisonPairs().map((p) => ({
+    url: absoluteUrl(`/compare/${p.slug}`),
+    lastModified: now,
+    changeFrequency: "monthly",
+    priority: 0.6,
+  }));
+
+  return [...statics, ...states, ...cities, ...comparisons];
 }

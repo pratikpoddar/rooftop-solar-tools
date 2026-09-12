@@ -31,6 +31,7 @@ echo "Pages"
 for path in / /tools /tools/subsidy-calculator /tools/bill-to-size \
   /tools/savings-payback /tools/loan-emi /solar-subsidy /solar-subsidy/gujarat \
   /solar-panel-price /solar-panel-price/pune /sources /privacy /terms /contact \
+  /compare /compare/ahmedabad-vs-surat /compare/bengaluru-vs-chennai \
   /robots.txt /sitemap.xml; do
   code="$(curl -sS -o /dev/null -w '%{http_code}' --max-time 30 "$BASE$path" || echo 000)"
   if [ "$code" = "200" ]; then pass "$path"; else fail "$path returned $code"; fi
@@ -81,6 +82,13 @@ if [ "$(sum "$TMP/a.png")" = "$(sum "$TMP/b.png")" ]; then
 else
   pass "distinct inputs produce distinct cards"
 fi
+
+# --- the comparison card carries both cities ------------------------------
+curl -sS -o "$TMP/cmp.png" --max-time 40 \
+  "$BASE/api/og?kind=compare&value=2.3&value2=5.2&place=Ahmedabad&place2=Surat" || true
+[ "$(dims "$TMP/cmp.png")" = "1200x630" ] \
+  && pass "city-vs-city card renders" \
+  || fail "city-vs-city card is $(dims "$TMP/cmp.png")"
 
 # --- short links ------------------------------------------------------------
 echo
