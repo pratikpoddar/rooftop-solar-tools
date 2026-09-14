@@ -2,6 +2,7 @@ import type { MetadataRoute } from "next";
 import { PHASE0_CITY_PAGES, STATES, citiesByPriority } from "@/data/solar-engine";
 import { comparisonPairs } from "@/lib/compare";
 import { LOCALIZED_ROUTES, PREFIXED_LOCALES, localePath } from "@/i18n/locales";
+import { CLUSTERS, allGuides } from "@/lib/guides";
 import { INDEXING_ALLOWED, absoluteUrl } from "@/lib/site";
 
 /**
@@ -62,5 +63,27 @@ export default function sitemap(): MetadataRoute.Sitemap {
     })),
   );
 
-  return [...statics, ...states, ...cities, ...comparisons, ...localized];
+  const guideHubs: MetadataRoute.Sitemap = [
+    { url: absoluteUrl("/guides"), lastModified: now, changeFrequency: "weekly", priority: 0.8 },
+    ...CLUSTERS.map((c) => ({
+      url: absoluteUrl(`/guides/topic/${c.slug}`),
+      lastModified: now,
+      changeFrequency: "monthly" as const,
+      priority: 0.7,
+    })),
+  ];
+
+  // Articles that defer to a programmatic page are left out: submitting a URL
+  // whose canonical points elsewhere just asks Google to resolve a conflict we
+  // have already resolved.
+  const guides: MetadataRoute.Sitemap = allGuides()
+    .filter((g) => !g.canonicalTo)
+    .map((g) => ({
+      url: absoluteUrl(`/guides/${g.slug}`),
+      lastModified: now,
+      changeFrequency: "monthly" as const,
+      priority: 0.6,
+    }));
+
+  return [...statics, ...states, ...cities, ...comparisons, ...localized, ...guideHubs, ...guides];
 }

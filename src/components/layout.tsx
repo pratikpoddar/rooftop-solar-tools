@@ -160,6 +160,11 @@ export function SiteFooter() {
                   City vs city
                 </EnglishOnlyLink>
               </li>
+              <li>
+                <EnglishOnlyLink href="/guides" lang={lang}>
+                  Guides
+                </EnglishOnlyLink>
+              </li>
             </ul>
           </div>
           <div>
