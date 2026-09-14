@@ -1,4 +1,6 @@
 import { Suspense } from "react";
+import { LocaleProvider } from "@/i18n/context";
+import { DEFAULT_LOCALE, type Locale } from "@/i18n/locales";
 import { Card } from "../ui";
 import { PrefilledTool } from "./PrefilledTool";
 import type { ToolKind } from "./PrefilledTool";
@@ -7,15 +9,26 @@ import type { ToolKind } from "./PrefilledTool";
  * Suspense boundary around the query-string read, so the page itself stays
  * static and only the calculator hydrates.
  */
-export function ToolMount(props: {
+export function ToolMount({
+  lang = DEFAULT_LOCALE,
+  ...props
+}: {
   kind: ToolKind;
   sourcePage: string;
+  lang?: Locale;
   fallback?: { stateSlug?: string; citySlug?: string; discomId?: string; kw?: number };
 }) {
+  /*
+   * The provider is mounted once here rather than threaded through each
+   * calculator, because the interactive tree is several components deep and all
+   * of them need strings.
+   */
   return (
-    <Suspense fallback={<ToolSkeleton />}>
-      <PrefilledTool {...props} />
-    </Suspense>
+    <LocaleProvider lang={lang}>
+      <Suspense fallback={<ToolSkeleton />}>
+        <PrefilledTool {...props} />
+      </Suspense>
+    </LocaleProvider>
   );
 }
 

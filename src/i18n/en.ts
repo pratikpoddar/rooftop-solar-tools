@@ -72,6 +72,7 @@ export const en = {
     chartTitle: "Cumulative savings over 25 years",
     monthlyTitle: "Units generated per month",
     emiVsSaving: "EMI vs bill saving",
+    compareBanks: "Compare banks →",
     card: "My {kw} kW rooftop in {place} pays back in {payback} and saves {monthly} a month after subsidy.",
     cardNoPayback: "My {kw} kW rooftop in {place} saves {monthly} a month on electricity.",
   },

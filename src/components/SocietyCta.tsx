@@ -1,7 +1,8 @@
 "use client";
 
 import { GHS_RATE_PER_KW, rupees } from "@/data/solar-engine";
-import { en, t } from "@/i18n/en";
+import { t } from "@/i18n";
+import { useLocale, useMessages } from "@/i18n/context";
 import { track } from "@/lib/analytics";
 import { shortLink, whatsAppLink, type SessionState } from "@/lib/share";
 import { SITE } from "@/lib/site";
@@ -30,8 +31,10 @@ export function SocietyCta({
   session: SessionState;
   tool: string;
 }) {
-  const link = shortLink({ ...session, t: "savings" });
-  const message = t(en.society.shareText, {
+  const m = useMessages();
+  const lang = useLocale();
+  const link = shortLink({ ...session, t: "savings", l: lang });
+  const message = t(m.society.shareText, {
     kw,
     place,
     monthly: rupees(monthlySaving),
@@ -39,8 +42,8 @@ export function SocietyCta({
   const href = whatsAppLink(`${message} ${SITE.name}:`, link);
 
   return (
-    <Callout tone="good" title={en.society.title}>
-      <p>{t(en.society.body, { rate: rupees(GHS_RATE_PER_KW) })}</p>
+    <Callout tone="good" title={m.society.title}>
+      <p>{t(m.society.body, { rate: rupees(GHS_RATE_PER_KW) })}</p>
       <a
         href={href}
         target="_blank"
@@ -48,7 +51,7 @@ export function SocietyCta({
         onClick={() => track("card_shared", { tool, channel: "whatsapp-society", state: session.s, city: session.c, kw })}
         className={`${buttonClasses("whatsapp")} mt-1 w-full`}
       >
-        {en.society.cta}
+        {m.society.cta}
       </a>
     </Callout>
   );

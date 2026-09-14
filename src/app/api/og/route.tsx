@@ -1,6 +1,8 @@
 import { ImageResponse } from "next/og";
 import type { NextRequest } from "next/server";
 import { rupeesShort } from "@/data/solar-engine";
+import { getMessages, t } from "@/i18n";
+import { DEFAULT_LOCALE, isLaunched, isLocale, type Locale } from "@/i18n/locales";
 import { SITE } from "@/lib/site";
 
 export const runtime = "edge";
@@ -30,18 +32,47 @@ interface Params {
 }
 
 interface CardCopy {
-  eyebrow: (p: Params) => string;
-  headline: (p: Params) => string;
+  eyebrow: (p: Params, m: M) => string;
+  headline: (p: Params, m: M) => string;
   /** Small line under the headline saying what the number is. */
-  subhead: (p: Params) => string;
+  subhead: (p: Params, m: M) => string;
   /** Up to two supporting figures rendered as a stat row. */
-  stats: (p: Params) => { value: string; label: string }[];
+  stats: (p: Params, m: M) => { value: string; label: string }[];
 }
 
-function place(p: Params): string {
-  return p.kw ? `My ${p.kw} kW rooftop in ${p.place}` : `My rooftop in ${p.place}`;
+type M = ReturnType<typeof getMessages>;
+
+/**
+ * Locales whose script this renderer can actually shape.
+ *
+ * Satori, which renders these cards, has no Indic complex-script shaping. It
+ * draws glyphs in logical order, so every pre-base vowel sign lands on the
+ * wrong consonant: Devanagari बिजली comes out as "बजिली" and बिल as "बलि";
+ * Tamil is worse, with கூரை rendering as "கஉரை" and செலவு as "சலெவு".
+ *
+ * That is misspelling, not mis-styling — and it would go on the single most
+ * forwarded artefact the product has. An English card is honest and legible; a
+ * Tamil card that reads as gibberish to a Tamil speaker is neither, and it
+ * damages exactly the credibility the share loop runs on.
+ *
+ * So cards fall back to English until the renderer can shape Indic text, which
+ * needs a HarfBuzz-backed pipeline rather than Satori. The localized copy below
+ * is correct and stays: enabling a script is adding it to this list.
+ *
+ * Everything else in the share path IS localized — the WhatsApp message text is
+ * plain text with no shaping involved, and the deep link reopens the calculator
+ * in the sender's language. Only the image is held back.
+ */
+const CARD_SHAPEABLE_LOCALES: Locale[] = ["en"];
+
+function place(p: Params, m: M): string {
+  return p.kw ? t(m.card.myRooftopIn, { kw: p.kw, place: p.place }) : t(m.card.myRooftop, { place: p.place });
 }
 
+/*
+ * Card copy is localized because the card IS the share unit (spec §4.1) — but
+ * see CARD_SHAPEABLE_LOCALES below for why only English is switched on today.
+ */
 const COPY: Record<Kind, CardCopy> = {
   savings: {
     eyebrow: place,
@@ -51,32 +82,33 @@ const COPY: Record<Kind, CardCopy> = {
      * is impressive and unrepeatable. The lifetime figure drops to a stat.
      */
     headline: (p) => (p.monthly ? `${rupeesShort(p.monthly)}/mo` : rupeesShort(p.value)),
-    subhead: (p) => (p.monthly ? "off my electricity bill" : "saved over 25 years"),
-    stats: (p) => {
+    subhead: (p, m) => (p.monthly ? m.card.offMyBill : m.card.savedOver25),
+    stats: (p, m) => {
       const out: { value: string; label: string }[] = [];
-      if (p.payback) out.push({ value: `${p.payback} yrs`, label: "to pay back" });
-      if (p.value2) out.push({ value: rupeesShort(p.value2), label: "government subsidy" });
-      if (p.monthly && out.length < 2) out.push({ value: rupeesShort(p.value), label: "over 25 years" });
+      if (p.payback) out.push({ value: `${p.payback} ${m.card.yrs}`, label: m.card.toPayBack });
+      if (p.value2) out.push({ value: rupeesShort(p.value2), label: m.card.governmentSubsidy });
+      if (p.monthly && out.length < 2) out.push({ value: rupeesShort(p.value), label: m.card.over25Years });
       return out.slice(0, 2);
     },
   },
   subsidy: {
-    eyebrow: (p) => `My solar subsidy in ${p.place}`,
+    eyebrow: (p, m) => t(m.card.mySubsidyIn, { place: p.place }),
     headline: (p) => rupeesShort(p.value),
-    subhead: () => "paid by the government",
-    stats: (p) => (p.value2 ? [{ value: rupeesShort(p.value2), label: `is all a ${p.kw ?? 3} kW system costs me` }] : []),
+    subhead: (_p, m) => m.card.paidByGovernment,
+    stats: (p, m) =>
+      p.value2 ? [{ value: rupeesShort(p.value2), label: t(m.card.isAllItCosts, { kw: p.kw ?? 3 }) }] : [],
   },
   emi: {
     eyebrow: place,
     headline: (p) => `${rupeesShort(p.value)}/mo`,
-    subhead: () => "solar loan EMI",
-    stats: (p) => (p.value2 ? [{ value: rupeesShort(p.value2), label: "my old electricity bill" }] : []),
+    subhead: (_p, m) => m.card.solarLoanEmi,
+    stats: (p, m) => (p.value2 ? [{ value: rupeesShort(p.value2), label: m.card.myOldBill }] : []),
   },
   size: {
-    eyebrow: (p) => `My roof in ${p.place}`,
+    eyebrow: (p, m) => t(m.card.myRoofIn, { place: p.place }),
     headline: (p) => `${p.value} kW`,
-    subhead: () => "is the right size for my bill",
-    stats: (p) => (p.value2 ? [{ value: rupeesShort(p.value2), label: "after subsidy" }] : []),
+    subhead: (_p, m) => m.card.rightSizeForBill,
+    stats: (p, m) => (p.value2 ? [{ value: rupeesShort(p.value2), label: m.card.afterSubsidy }] : []),
   },
   /*
    * The comparison card carries both cities as stats rather than declaring a
@@ -85,11 +117,11 @@ const COPY: Record<Kind, CardCopy> = {
    */
   compare: {
     eyebrow: (p) => `${p.place} vs ${p.place2 ?? ""}`.trim(),
-    headline: () => "Solar payback",
-    subhead: () => `compared on the same ${3} kW system`,
-    stats: (p) => [
-      { value: `${p.value} yrs`, label: p.place },
-      { value: `${p.value2 ?? "—"} yrs`, label: p.place2 ?? "" },
+    headline: (_p, m) => m.card.solarPayback,
+    subhead: (_p, m) => t(m.card.comparedOnSame, { kw: 3 }),
+    stats: (p, m) => [
+      { value: `${p.value} ${m.card.yrs}`, label: p.place },
+      { value: `${p.value2 ?? "—"} ${m.card.yrs}`, label: p.place2 ?? "" },
     ],
   },
 };
@@ -113,8 +145,13 @@ export async function GET(req: NextRequest) {
   const square = q.get("size") === "sq";
   const width = square ? 1080 : 1200;
   const height = square ? 1080 : 630;
+  const langParam = q.get("lang") ?? "";
+  const requested: Locale = isLocale(langParam) && isLaunched(langParam) ? langParam : DEFAULT_LOCALE;
+  const lang = CARD_SHAPEABLE_LOCALES.includes(requested) ? requested : DEFAULT_LOCALE;
+  const m = getMessages(lang);
+
   const copy = COPY[kind];
-  const stats = copy.stats(p);
+  const stats = copy.stats(p, m);
 
   return new ImageResponse(
     (
@@ -143,7 +180,7 @@ export async function GET(req: NextRequest) {
 
         <div style={{ display: "flex", flexDirection: "column", gap: square ? 18 : 12 }}>
           <div style={{ display: "flex", fontSize: square ? 40 : 36, color: "#fcd34d", fontWeight: 600 }}>
-            {copy.eyebrow(p)}
+            {copy.eyebrow(p, m)}
           </div>
           <div
             style={{
@@ -154,9 +191,9 @@ export async function GET(req: NextRequest) {
               letterSpacing: -4,
             }}
           >
-            {copy.headline(p)}
+            {copy.headline(p, m)}
           </div>
-          <div style={{ display: "flex", fontSize: square ? 40 : 36, color: "#e2e8f0" }}>{copy.subhead(p)}</div>
+          <div style={{ display: "flex", fontSize: square ? 40 : 36, color: "#e2e8f0" }}>{copy.subhead(p, m)}</div>
 
           {stats.length ? (
             <div style={{ display: "flex", gap: square ? 28 : 32, marginTop: square ? 14 : 10 }}>
@@ -188,7 +225,7 @@ export async function GET(req: NextRequest) {
             fontSize: square ? 32 : 28,
           }}
         >
-          <div style={{ display: "flex", color: "#fbbf24", fontWeight: 700 }}>Check yours — free, no signup</div>
+          <div style={{ display: "flex", color: "#fbbf24", fontWeight: 700 }}>{m.card.checkYours}</div>
           <div style={{ display: "flex", color: "#94a3b8" }}>{SITE.url.replace(/^https?:\/\//, "")}</div>
         </div>
       </div>
