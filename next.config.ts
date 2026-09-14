@@ -63,6 +63,24 @@ function resolveIndexing(): string {
 const BUILD_COMMIT =
   process.env.COMMIT_REF ?? process.env.VERCEL_GIT_COMMIT_SHA ?? process.env.GIT_COMMIT ?? "unknown";
 
+/**
+ * GoatCounter endpoint, and whether to load it at all.
+ *
+ * Only the production deploy counts. Deploy previews and branch deploys serve
+ * the same pages on a different hostname, and local dev reloads constantly —
+ * counting either inflates the numbers the §11 funnel is measured against, and
+ * a funnel you cannot trust is worse than no funnel.
+ */
+const ANALYTICS_ENDPOINT = process.env.NEXT_PUBLIC_GOATCOUNTER ?? "https://pratikpoddar.goatcounter.com/count";
+
+function analyticsEnabled(): string {
+  const explicit = process.env.NEXT_PUBLIC_ANALYTICS_ENABLED;
+  if (explicit === "true" || explicit === "false") return explicit;
+  if (process.env.NETLIFY) return process.env.CONTEXT === "production" ? "true" : "false";
+  if (process.env.VERCEL_ENV) return process.env.VERCEL_ENV === "production" ? "true" : "false";
+  return "false";
+}
+
 const SITE_URL = resolveSiteUrl();
 const ALLOW_INDEXING = resolveIndexing();
 
@@ -73,6 +91,8 @@ const nextConfig: NextConfig = {
     NEXT_PUBLIC_SITE_URL: SITE_URL,
     NEXT_PUBLIC_ALLOW_INDEXING: ALLOW_INDEXING,
     NEXT_PUBLIC_BUILD_COMMIT: BUILD_COMMIT,
+    NEXT_PUBLIC_GOATCOUNTER: ANALYTICS_ENDPOINT,
+    NEXT_PUBLIC_ANALYTICS_ENABLED: analyticsEnabled(),
   },
 
   /**

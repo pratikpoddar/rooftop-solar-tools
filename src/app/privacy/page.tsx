@@ -124,15 +124,17 @@ export default function PrivacyPage() {
       </section>
 
       <section className="mt-8">
-        <SectionHeading>Analytics and cookies</SectionHeading>
+        <SectionHeading>Analytics, and why there are no cookies</SectionHeading>
         <Prose>
           <p className="mt-2">
-            We use Google Analytics to count page views and which calculators get completed. It records the page, your
-            approximate region, and your device type — not your identity, and it is never joined to your enquiry.
+            We use GoatCounter to count page views and which calculators get completed. It records the page you were
+            on, roughly where in the world the request came from, and your browser — and nothing else. It sets{" "}
+            <strong>no cookies</strong>, stores no personal data, and cannot follow you to any other site.
           </p>
           <p>
-            We set no advertising cookies, run no ad networks, and use no cross-site trackers. The site stores nothing
-            on your device beyond what Google Analytics needs.
+            That means we cannot tell one visitor from another across visits, and we could not link your browsing to
+            your enquiry even if we wanted to. There are no advertising cookies, no ad networks and no cross-site
+            trackers. The site stores nothing on your device.
           </p>
         </Prose>
       </section>
