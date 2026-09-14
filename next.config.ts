@@ -49,6 +49,20 @@ function resolveIndexing(): string {
   return "false";
 }
 
+/**
+ * The commit this bundle was built from.
+ *
+ * Exists because production silently served a five-day-old build while every
+ * deploy preview passed and every merge looked clean — the site was up, the
+ * pages were valid, and nothing anywhere said "this is not the code you
+ * merged". Publishing it makes that condition detectable from outside instead
+ * of inferrable only by spotting a missing feature.
+ *
+ * Netlify sets COMMIT_REF; Vercel sets VERCEL_GIT_COMMIT_SHA.
+ */
+const BUILD_COMMIT =
+  process.env.COMMIT_REF ?? process.env.VERCEL_GIT_COMMIT_SHA ?? process.env.GIT_COMMIT ?? "unknown";
+
 const SITE_URL = resolveSiteUrl();
 const ALLOW_INDEXING = resolveIndexing();
 
@@ -58,6 +72,7 @@ const nextConfig: NextConfig = {
   env: {
     NEXT_PUBLIC_SITE_URL: SITE_URL,
     NEXT_PUBLIC_ALLOW_INDEXING: ALLOW_INDEXING,
+    NEXT_PUBLIC_BUILD_COMMIT: BUILD_COMMIT,
   },
 
   /**

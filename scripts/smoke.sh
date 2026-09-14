@@ -138,6 +138,34 @@ else
   fail "no /privacy link on the page carrying the consent checkbox"
 fi
 
+# --- is the deployment even running the commit we think it is? --------------
+#
+# This check exists because production once served a five-day-old build for
+# several merges running. Every deploy preview passed, every page returned 200,
+# and the only symptom was a feature quietly missing. A smoke test that only
+# asks "does the site work" will pass happily against the wrong build.
+echo
+echo "Deployed build"
+deployed="$(curl -sS --max-time 30 "$BASE/api/version" 2>/dev/null | python3 -c "
+import json,sys
+try: print(json.load(sys.stdin).get('commit','unknown'))
+except Exception: print('unavailable')
+" || echo unavailable)"
+local_head="$(git rev-parse HEAD 2>/dev/null || echo unknown)"
+
+short() { printf '%s' "${1:0:7}"; }
+
+case "$deployed" in
+  unavailable|unknown|"")
+    skip "deployed commit unknown — /api/version missing, so this build predates the check" ;;
+  *)
+    if [ "$(short "$deployed")" = "$(short "$local_head")" ]; then
+      pass "running this commit ($(short "$deployed"))"
+    else
+      fail "deployed commit $(short "$deployed") is not local HEAD $(short "$local_head") — production may be stale or pinned"
+    fi ;;
+esac
+
 # --- indexing: robots.txt, the page meta and the sitemap must agree ---------
 echo
 echo "Indexing"
