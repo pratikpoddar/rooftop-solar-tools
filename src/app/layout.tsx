@@ -4,6 +4,7 @@ import "./globals.css";
 import { INDEXING_ALLOWED, SITE } from "@/lib/site";
 import { jsonLd, organizationSchema, webSiteSchema } from "@/lib/schema";
 import { SiteFooter, SiteHeader } from "@/components/layout";
+import { Analytics } from "@/components/Analytics";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE.url),
@@ -61,6 +62,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 
         <script type="application/ld+json" dangerouslySetInnerHTML={jsonLd(organizationSchema())} />
         <script type="application/ld+json" dangerouslySetInnerHTML={jsonLd(webSiteSchema())} />
+
+        <Analytics />
 
         {GA_ID ? (
           <>

@@ -35,7 +35,9 @@ npm run dev
 |---|---|---|
 | `NEXT_PUBLIC_SITE_URL` | no | Canonical URLs, sitemap URLs, OG image URLs, `wa.me` links. Unset, the build reads the host's own address (Netlify `URL`/`DEPLOY_PRIME_URL`, Vercel `VERCEL_URL`) and falls back to the Netlify site — resolved in `next.config.ts` so server and browser agree |
 | `NEXT_PUBLIC_ALLOW_INDEXING` | to launch | `"true"` opens the site to crawlers. Off by default: `robots.txt` disallows everything, pages carry `noindex`, the sitemap is empty |
-| `NEXT_PUBLIC_GA_ID` | no | Analytics is skipped entirely when unset |
+| `NEXT_PUBLIC_GOATCOUNTER` | no | GoatCounter endpoint; defaults to the project's own. Loaded only on the production deploy |
+| `NEXT_PUBLIC_ANALYTICS_ENABLED` | no | Forces analytics on/off; otherwise follows the deploy context |
+| `NEXT_PUBLIC_GA_ID` | no | Optional GA4. GoatCounter is what actually runs; setting this makes `/privacy` incomplete |
 | `SHEETS_WEBHOOK_URL` | in production | Apps Script web app; see `scripts/leads-apps-script.gs`. `/api/lead` returns 503 rather than dropping a lead silently |
 
 #### Wiring up lead capture
