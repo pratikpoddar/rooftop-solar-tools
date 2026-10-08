@@ -97,9 +97,9 @@ export const en = {
   },
 
   urgency: {
-    title: "{amount} is available today",
-    body: "PM Surya Ghar is a fixed-outlay scheme — Rs 75,021 crore across a target of 1 crore households — so the central subsidy is finite rather than permanent.",
-    stateBudget: "{agency}'s top-up is budget-dependent on top of that and pauses when the state allocation runs out.",
+    title: "Check central subsidy and state top-up separately",
+    body: "PM Surya Ghar provides up to Rs 78,000 in central subsidy for eligible residential installations, subject to scheme approval. It is a fixed-outlay scheme: Rs 75,021 crore across a target of 1 crore households, so the central subsidy is finite rather than permanent.",
+    stateBudget: "The {agency} top-up is separate from the central subsidy. It is conditional and budget-dependent, and can pause when the state allocation runs out. Confirm current availability and eligibility with the state agency before including it in your budget.",
     honest: "There is no published deadline, and we will not invent one. But the money is allocated, not unlimited.",
   },
 
