@@ -129,7 +129,9 @@ export function buildStateSubsidyPage(stateSlug: string): StateSubsidyPage | nul
       example.stateCapital > 0 ? ` plus ${rupees(example.stateCapital)} from ${agency}` : ""
     } on a ${EXAMPLE_KW} kW rooftop system, what the system costs, and what you pay after subsidy.`,
     lede:
-      example.stateCapital > 0
+      state.slug === "haryana"
+        ? `The amounts shown here include only the central PM Surya Ghar subsidy, up to ${rupees(RESIDENTIAL_CFA_CAP)}. Haryana also publishes income-linked State Financial Assistance for eligible households. It is not included in these estimates; check the official DISCOM portal for eligibility and current availability.`
+        : example.stateCapital > 0
         ? provisional
           ? `The central subsidy of ${rupees(example.central)} is a firm entitlement. ${agency} nominally adds ${rupees(example.stateCapital)} on top, but that part is budget-dependent and has changed before — treat it as a bonus to confirm, not money to bank on.`
           : `${state.name} adds ${rupees(example.stateCapital)} on top of the central subsidy${
@@ -187,7 +189,9 @@ function stateFaqs(
     {
       q: `How much solar subsidy do I get in ${state.name}?`,
       a:
-        n.topUp > 0
+        state.slug === "haryana"
+          ? `The central PM Surya Ghar amount on a ${EXAMPLE_KW} kW system is ${rupees(n.central)}. Haryana also publishes income-linked State Financial Assistance for eligible households. The figures on this page exclude that conditional assistance. Check the official DISCOM portal for eligibility and current availability before relying on an additional amount.`
+          : n.topUp > 0
           ? `On a ${EXAMPLE_KW} kW residential system the central PM Surya Ghar scheme pays ${rupees(n.central)} — ${rupees(30000)} per kW for the first 2 kW and ${rupees(18000)} for the third, capped at ${rupees(RESIDENTIAL_CFA_CAP)}. ${n.agency} nominally adds ${rupees(n.topUp)} on top, taking it to ${rupees(n.total)}.${
               needsAvailabilityCheck(getStateTopUp(state.slug))
                 ? ` The state half is budget-dependent rather than guaranteed, so confirm it is still open with ${n.agency} before you factor it into your decision.`
@@ -208,7 +212,9 @@ function stateFaqs(
   if (topUp?.separateApplication && topUp.applicationPortal) {
     faqs.push({
       q: `Do I have to apply separately for the ${state.name} state subsidy?`,
-      a: `Yes. Registering on the national PM Surya Ghar portal gets you the central subsidy only. The ${n.agency} top-up needs its own application at ${topUp.applicationPortal}, and several states have a deadline measured from your commissioning date — so do it as soon as the system is live.`,
+      a: state.slug === "haryana"
+        ? `The official Haryana DISCOM application portal at https://sfa.dhbvn.org.in/ asks for a Parivar Pehchan Patra (PPP) family ID and publishes the State Financial Assistance conditions. Check your eligibility and application route with your DISCOM before including state assistance in your budget.`
+        : `Yes. Registering on the national PM Surya Ghar portal gets you the central subsidy only. The ${n.agency} top-up needs its own application at ${topUp.applicationPortal}, and several states have a deadline measured from your commissioning date — so do it as soon as the system is live.`,
     });
   }
 
@@ -393,7 +399,9 @@ function cityFaqs(
     },
     {
       q: `Which subsidy applies in ${city.name}?`,
-      a: `${city.name} is in ${state.name}, so the central PM Surya Ghar subsidy applies${
+      a: state.slug === "haryana"
+        ? `${city.name} is in Haryana. The central PM Surya Ghar subsidy applies, and Haryana also publishes income-linked State Financial Assistance for eligible households. This calculator excludes that conditional assistance; check https://sfa.dhbvn.org.in/ for eligibility and current availability.`
+        : `${city.name} is in ${state.name}, so the central PM Surya Ghar subsidy applies${
         subsidyBreakdown({ kw: EXAMPLE_KW, stateSlug: state.slug }).stateCapital > 0
           ? ` along with the ${getStateTopUp(state.slug)?.agency} state top-up`
           : " and there is no additional state top-up"

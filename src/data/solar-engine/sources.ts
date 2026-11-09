@@ -33,6 +33,7 @@ export const SOURCES: Record<string, Source> = {
   },
   upneda: { key: "upneda", label: "UPNEDA", url: "https://upneda.org.in" },
   rrecl: { key: "rrecl", label: "RRECL, Government of Rajasthan", url: "https://energy.rajasthan.gov.in/rrecl" },
+  "haryana-discom-sfa": { key: "haryana-discom-sfa", label: "Haryana DISCOM State Financial Assistance portal", url: "https://sfa.dhbvn.org.in/" },
   hareda: { key: "hareda", label: "HAREDA", url: "https://hareda.gov.in" },
   "delhi-solar": { key: "delhi-solar", label: "Delhi Solar Portal", url: "https://solar.delhi.gov.in" },
   mpuvn: { key: "mpuvn", label: "MPUVN", url: "https://mpuvn.mp.gov.in" },

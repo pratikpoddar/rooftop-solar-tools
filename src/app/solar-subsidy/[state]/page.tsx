@@ -77,7 +77,7 @@ export default async function StateSubsidyPage({ params }: Props) {
     { name: "Install through an empanelled vendor", text: "The subsidy is only released for systems installed by a vendor empanelled with your DISCOM, using models on the ALMM list." },
     { name: "Apply for the net meter and inspection", text: "After installation, submit the commissioning request. The DISCOM inspects and fits a bidirectional net meter." },
     ...(topUp?.separateApplication && topUp.applicationPortal
-      ? [{ name: `Apply separately to ${topUp.agency}`, text: `The national portal releases the central subsidy only. Submit the state top-up application at ${topUp.applicationPortal}${topUp.conditions.some((c) => c.includes("45 days")) ? " within 45 days of commissioning" : ""}.` }]
+      ? [{ name: `Apply separately to ${topUp.agency}`, text: slug === "haryana" ? "Check the State Financial Assistance conditions and application route at https://sfa.dhbvn.org.in/ with your DISCOM before relying on a state payment." : `The national portal releases the central subsidy only. Submit the state top-up application at ${topUp.applicationPortal}${topUp.conditions.some((c) => c.includes("45 days")) ? " within 45 days of commissioning" : ""}.` }]
       : []),
     { name: "Submit bank details for the subsidy", text: "Once the net meter is installed and the commissioning certificate is issued, upload your bank details on the portal. The subsidy is paid by direct transfer, typically within 30 days." },
   ];
