@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { STATES, citiesInState, formatIndianNumber, getNetMeteringRule, getStateTopUp, rupees, statesByPriority } from "@/data/solar-engine";
+import { STATES, citiesInState, formatIndianNumber, getNetMeteringRule, getStateTopUp, isBuiltCity, rupees, statesByPriority } from "@/data/solar-engine";
 import { buildStateSubsidyPage, EXAMPLE_KW } from "@/lib/pages";
 import { breadcrumbSchema, faqSchema, howToSchema, jsonLd } from "@/lib/schema";
 import { ToolMount } from "@/components/tools/ToolMount";
@@ -58,7 +58,9 @@ export default async function StateSubsidyPage({ params }: Props) {
 
   const topUp = getStateTopUp(slug);
   const rule = getNetMeteringRule(slug);
-  const cities = citiesInState(slug).slice(0, 6);
+  const cities = citiesInState(slug)
+    .filter((c) => isBuiltCity(c.slug))
+    .slice(0, 6);
   const nearbyStates = statesByPriority()
     .filter((s) => s.slug !== slug)
     .slice(0, 6);

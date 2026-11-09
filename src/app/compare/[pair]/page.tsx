@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { formatIndianNumber, rupees } from "@/data/solar-engine";
+import { formatIndianNumber, isBuiltCity, rupees } from "@/data/solar-engine";
 import { buildComparison, comparisonPairs, parsePairSlug } from "@/lib/compare";
 import { EXAMPLE_KW, EXAMPLE_UNITS } from "@/lib/pages";
 import { breadcrumbSchema, faqSchema, jsonLd } from "@/lib/schema";
@@ -206,8 +206,12 @@ export default async function ComparePage({ params }: Props) {
         <LinkList
           title="These cities on their own"
           links={[
-            { href: `/solar-panel-price/${a.city.slug}`, label: `Solar price in ${a.city.name}` },
-            { href: `/solar-panel-price/${b.city.slug}`, label: `Solar price in ${b.city.name}` },
+            ...(isBuiltCity(a.city.slug)
+              ? [{ href: `/solar-panel-price/${a.city.slug}`, label: `Solar price in ${a.city.name}` }]
+              : []),
+            ...(isBuiltCity(b.city.slug)
+              ? [{ href: `/solar-panel-price/${b.city.slug}`, label: `Solar price in ${b.city.name}` }]
+              : []),
           ]}
         />
         <LinkList

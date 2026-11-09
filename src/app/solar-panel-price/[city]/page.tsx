@@ -7,6 +7,7 @@ import {
   formatIndianNumber,
   getDiscom,
   hasSlabTable,
+  isBuiltCity,
   relatedCities,
   rupees,
 } from "@/data/solar-engine";
@@ -70,9 +71,11 @@ export default async function CityPricePage({ params }: Props) {
 
   const discom = page.city.discomId ? getDiscom(page.city.discomId) : undefined;
   const gen = estimateGeneration({ kw: EXAMPLE_KW, citySlug: slug });
-  const nearby = relatedCities(page.city, 3);
+  const nearby = relatedCities(page.city, 20)
+    .filter((c) => isBuiltCity(c.slug))
+    .slice(0, 3);
   const sameState = citiesInState(page.city.stateSlug)
-    .filter((c) => c.slug !== slug)
+    .filter((c) => c.slug !== slug && isBuiltCity(c.slug))
     .slice(0, 6);
 
   const trail = [

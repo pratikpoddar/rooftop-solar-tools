@@ -30,6 +30,12 @@ export function citiesByPriority(limit = CITIES.length): City[] {
   return [...CITIES].sort((a, b) => a.priority - b.priority).slice(0, limit);
 }
 
+/** Slugs with a built /solar-panel-price/<slug> page (Phase 0 subset). Filter every link to a city price page through this so the site never links to a 404. */
+const BUILT_CITY_SLUGS = new Set(citiesByPriority(PHASE0_CITY_PAGES).map((c) => c.slug));
+export function isBuiltCity(slug: string): boolean {
+  return BUILT_CITY_SLUGS.has(slug);
+}
+
 /** The other cities we link to from a city page (spec §5: 3 nearest, approximated by same state then priority). */
 export function relatedCities(city: City, count = 3): City[] {
   const sameState = citiesInState(city.stateSlug).filter((c) => c.slug !== city.slug);
