@@ -109,7 +109,6 @@ const nextConfig: NextConfig = {
       { source: "/is-solar-worth-it", destination: "/tools/savings-payback", permanent: true },
       { source: "/solar-loan-emi-calculator", destination: "/tools/loan-emi", permanent: true },
       { source: "/pm-surya-ghar-loan", destination: "/tools/loan-emi", permanent: true },
-      { source: "/solar-panel-price/panipat", destination: "/solar-panel-price/gurugram", permanent: true },
     ];
   },
 
